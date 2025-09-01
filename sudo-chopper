@@ -1,0 +1,419 @@
+#!/bin/bash
+
+#########################
+# Setting formatting tags
+otagBold="\e[1m";
+ctag="\e[0m";
+otagRed='\e[0;31m'
+otagRevRed='\e[0;101m'
+otagUline="\e[4m"
+otagItal="\e[3m"
+#########################
+# Clear variables so we don't inherit settings from sourced runs:
+
+unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep;
+# Initialize these variables for unary expressions:
+eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optQuiet,optRecombine,optFlatten}=0
+#echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
+
+set +x
+# Ensure utilities we rely upon are present
+for cmdTest in sed awk grep visudo tr ;
+do
+  if ! which ${cmdTest} > /dev/null 2>&1;
+  then
+    echo -e "${otagBold}${otagRed}${cmdTest}${ctag}${otagRed} is not present; please install it then re-run this script.${ctag}";
+    echo "identifying package: dnf provides */${cmdTest}"
+    dnf provides */${cmdTest}
+    exit 1
+  fi;
+done;
+
+fnHelp() {
+
+echo -e "
+
+ ${otagBold} -h | --help${ctag}
+      helpful words and stuff (this screen)
+
+ ${otagBold} -s | --input ${ctag}${otagItal}[filename]${ctag}
+      Input file you want to process
+
+ ${otagBold} -d | --workingDirectory${ctag}
+      working directory (not implemented yet)
+
+ ${otagBold} -m | --monitor${ctag}
+      Monitor tail of ls -lhtr of target directory.
+      WARNING! This is VERY slow! Use ONLY for debugging!
+
+ ${otagBold} -M | --nomerge${ctag}
+      Don't merge the comments back in - this is good for
+      further processing of the split files before recombining.
+
+ ${otagBold} -N | --nuke${ctag}
+      Nuke from orbit to be sure
+
+ ${otagBold} -n | --nocomment${ctag}
+      Strip out all comments
+
+ ${otagBold} -o | --outputfile ${ctag}${otagItal}[filename]${ctag}
+      outputfile (for recombined sudoers file)
+
+ ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
+      PREfix for the split files which are numbered in order found in --input file
+
+ ${otagBold} -r | --recombine${ctag}
+      NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
+
+ ${otagBold} -s | --split${ctag}
+      disassemble
+
+ ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
+      target directory to place split files
+
+ ${otagBold} -v | --verbose${ctag}
+      words and stuff for debugging
+
+ ${otagBold} -vv | --verbose11${ctag}
+      extra words and stuff (go full ADHD)
+
+ ${otagBold} -vvv | --plaid${ctag}
+      tl;dr
+"
+}
+
+function fnSpinner() {
+  if [ -z $gfxSpin ]
+  then
+    gfxSpin="/"
+  fi
+
+  echo -en "${otagBold}${strStep}    ${gfxSpin} ${ctag}\r"
+  case "${gfxSpin}" in
+    "/" ) gfxSpin="-"
+      ;;
+    "-" ) gfxSpin="\\"
+      ;;
+    "\\" ) gfxSpin="|"
+      ;;
+    "|" ) gfxSpin="/"
+      ;;
+    "/" ) gfxSpin="-"
+      ;;
+    "-" ) gfxSpin="\\"
+      ;;
+    "\\" ) gfxSpin="|"
+      ;;
+    "|" ) gfxSpin="/"
+      ;;
+  esac;
+}
+
+function fnSplitSudoers() {
+
+  ${cmdEcho} "Entered ${FUNCNAME[0]}"
+  ${cmdEchoADHD}  "Line ${LINENO} : ${FUNCNAME[0]} : \${dirTarget} ${dirTarget}, \${optFilePrefix},${optFilePrefix}";
+  if [ $(find "${dirTarget}" -name "${optFilePrefix}*" | wc -l) == 0 ] ;
+  then
+    ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]} : ";
+    ${cmdEcho} "Proceding with nosudoers split; Please wait...";
+    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' ${fileInput} | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+    ${cmdEcho} "Initial file split complete; now processing comments and rules:";
+    echo
+    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
+    do
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n 5 || fnSpinner
+      ${cmdEchoADHD} -e "\nLine ${LINENO} : ${FUNCNAME[0]} : "
+      ${cmdEchoADHD} "Current file: ${curFile}";
+      if  [ ! ${optNocomment} -eq 1 ];
+      then
+        sed -En '/^(\s+)?#/p' ${curFile} > "${curFile}-comment";
+      fi
+      sed -En '/^(\s+)?#/!p' ${curFile} > "${curFile}-rule";
+      rm ${optVerbose} "${curFile}";
+      ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]}";
+      sed -En '/^#.*/p' "${curFile}-rule" > "${curFile}" ; sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;' "${curFile}" | tr -d '\n' >> "${curFile}-rule" ; echo >> "${curFile}-rule";
+      rm ${optVerbose} "${curFile}";
+      ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]} : ";
+    done;
+    ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]} : ";
+  else
+    echo "There are file conflicts matching file path ${dirTarget}/${optFilePrefix}*; please either archive or delete them or change the target path.";
+    exit 1;
+  fi;
+
+}
+
+
+function fnFlattenRules() {
+  unset curFile;
+  echo;
+  for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
+  do
+    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+    ${cmdEchoADHD} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
+    sed -E '/^#.*/p' ${curFile} | sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
+    echo >> "${curFile}-rule";
+    mv ${optVerbose} "${curFile}-rule" "${curFile}";
+  done;
+
+}
+
+function fnRecombine() {
+
+  ${cmdEchoADHD} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
+  unset curFile;
+  echo;
+  if [ -f "${optOutputFile}" ];
+  then
+    if [ "${optOverwrite}" == 1 ];
+    then
+      ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]} : \${optOutputFile} _ ${optOutputFile}";
+      > "${optOutputFile}";
+    fi;
+    ${cmdEchoADHD} -n "Line: ${LINENO} : ${FUNCNAME[0]} : ";
+  elif [[ -z "${optOutputFile}" ]];
+  then
+    ${cmdEchoADHD} -n "Line: ${LINENO} : ${FUNCNAME[0]} : ";
+    echo -e"${otagRed}!!! ACHTUNG! Output filename not specified!!! Your command line:${ctag}";
+    echo -e "\n\t${cmdLine}\n";
+    exit 1;
+  fi;
+
+
+  if [ $(find ${dirTarget} -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ne 0 ]
+  then
+    ${cmdEchoADHD} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
+    for curFile in $(find ${dirTarget} -name ${optFilePrefix}*.tmp-merged | sort -V);
+    do
+        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+        ${cmdEchoADHD} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}";
+        cat "${curFile}" >> "${optOutputFile}";
+        echo >> "${optOutputFile}";
+    done
+
+  else
+    ${cmdEchoADHD} "Line: ${LINENO} : ${FUNCNAME[0]} : ";
+    for curFile in $(find ${dirTarget} -name ${optFilePrefix}*.tmp-comment -o -name ${optFilePrefix}*.tmp-rule | sort -V);
+    do
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+      if [[ "${curFile}" == *".tmp-comment" ]] && [ ! ${optNocomment} -eq 1 ];
+      then
+        ${cmdEchoADHD} -e "Line ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}"
+        cat "${curFile}" >> "${optOutputFile}";
+      elif [[ "${curFile}" == *".tmp-rule" ]];
+      then
+        ${cmdEchoADHD} "Line ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}";
+        cat "${curFile}" >> "${optOutputFile}";
+      fi;
+    done
+
+  fi
+}
+
+
+function fnMergeComments() {
+
+  ${cmdEchoADHD} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
+
+  for curFile in $(find ${dirTarget} -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  do
+    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+    if [ -f "${curFile}.tmp-comment" ];
+    then
+      cat "${curFile}.tmp-comment" > "${curFile}.tmp-merged" && rm "${curFile}.tmp-comment";
+    fi;
+    if [ -f "${curFile}.tmp-rule" ];
+    then
+      cat "${curFile}.tmp-rule" >> "${curFile}.tmp-merged"  && rm "${curFile}.tmp-rule";
+    fi;
+  done;
+
+}
+
+
+
+# END FUNCTION DEFINITIONS
+
+##############################
+#
+# Unless [ -v | --verbose ] is enabled, "quiet" mode is used for commands
+# and nonessential echo commands are substituted with do-nothing "true"
+cmdEcho="true"
+cmdEchoADHD="true"
+optQuiet="--quiet"
+
+##############################
+#
+# Did user ask us to do anything? If not, let's blow this joint!
+
+if [[ -z "$@" ]];
+then
+  echo -e "${otagRed}You supplied no command arguments; unable to proceed.${ctag}";
+  echo "Your command line:";
+  echo -e "\n\t$cmdLine\n";
+  fnHelp;
+  exit 1;
+fi;
+
+#
+###############################
+# Since user gave us stuff to do, let's process arguments. Party on!
+while [ "$1" != "" ] ;
+do
+  case $1 in
+    -h | --help )   fnHelp;
+                    exit 0;
+                    ;;
+    -s | --input )  shift;
+                    fileInput="$1";
+                    ;;
+    -d | --workingDirectory ) shift;
+                    dirWorking="$1"
+                    ;;
+    -f | --flatten ) optFlatten=1;
+                    ;;
+    -m | --monitor ) optMonitor=1;
+                    ;;
+    -M | --nomerge ) optNoMerge=1;
+                    ;;
+    -N | --nuke )   optOverwrite=1;
+                    ;;
+    -n | --nocomment ) optNocomment=1;
+                    ;;
+    -o | --outputfile ) shift;
+                    optOutputFile="$1";
+                    ;;
+    -p | --prefix ) shift;
+                    optFilePrefix="$1";
+                    ;;
+    -r | --recombine ) optRecombine=1;
+                    ;;
+    -s | --split )  optSplit=1;
+                    ;;
+    -t | --targetdir ) shift;
+                    dirTarget="$1";
+                    ;;
+    -v | --verbose ) optVerbose="-v";
+                    cmdEcho="echo";
+                    unset optQuiet;
+                    ;;
+    -vv | --verbose11 ) optVerbose="-v"
+                    cmdEcho="echo";
+                    cmdEchoADHD="echo";
+                    ;;
+    -vv | --verbose11 ) optVerbose="-v"
+                    cmdEcho="echo";
+                    cmdEchoADHD="echo";
+                    ;;
+    -vvv | --plaid ) set -x;
+                    optVerbose="-v";
+                    cmdEcho="echo";
+                    cmdEchoADHD="echo";
+                    ;;
+    * )
+                    echo -e "${otagRed} \n\tI couldn't understand your command. Please note if you specified an argument with spaces ";
+                    echo -e "\t or extended ASCII, you will need to escape those characters and/or use quotes around the path.${ctag}\n";
+                    fnHelp;
+                    exit 1
+                    ;;
+  esac ;
+  shift ;
+done;
+
+
+${cmdEchoADHD} -e "\nLine ${LINENO}; optSplit = ${optSplit}"
+
+if [ ${optSplit} -eq 1 ];
+then
+  ${cmdEchoADHD} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
+
+  # If target directory doesn't exist, create it
+  if [ ! -z ${dirTarget} ] && [ ! -d "${dirTarget}" ];
+  then
+    ${cmdEcho} "${dirTarget} does not exist; creating it now:";
+    mkdir ${optVerbose} "${dirTarget}";
+    if [ ! $? == 0 ];
+    then
+      echo "Error while trying to create ${dirTarget}"
+      exit 1
+    fi
+  fi;
+  if [ -z "${fileInput}" ];
+  then
+    ${cmdEchoADHD} -e "\nLine ${LINENO}: Checking for input filename"
+
+    echo "Please supply an ${otagRed}--input [filename]${ctag}"
+    echo "Your command line:";
+    echo "\t ${cmdLine}\n";
+    exit 1;
+  else
+    true
+    if [ ! -f "${fileInput}" ];
+    then
+     ${cmdEchoADHD} -e "\nLine ${LINENO} : \${fileInput} ${fileInput}"
+      echo "${fileInput} is not accessible.";
+      exit 1;
+    elif [ -z "${optFilePrefix}" ];
+    then
+      ${cmdEchoADHD} -e "\nLine ${LINENO}"
+      echo "${otagRed}Please include a \"--prefix [prefix]\" argument on your command.${ctag}";
+      echo "Your command line:";
+      echo -e "\t ${cmdLine}\n";-
+      exit 1;
+    else
+      ${cmdEchoADHD} -e "\nLine ${LINENO}"
+      strStep="Splitting ${fileInput} to ${dirTarget}/${optFilePrefix}*"
+      ${cmdEchoADHD} -e "\n${LINENO} : entering fnSplitSudoers"
+      fnSplitSudoers;
+    fi
+  fi
+fi
+
+${cmdEcho} -e "\n${LINENO} : Flatten routine is next"
+
+if [ ${optFlatten} -eq 1 ];
+then
+  # If target directory doesn't exist, bail
+  if [ ! -z ${dirTarget} ] && [ ! -d "${dirTarget}" ];
+  then
+    ${cmdEcho} "${dirTarget} does not exist; please check your ${otagItal}--target [filepath]${ctag} and try again."
+    exit 1
+  fi
+
+  strStep="Flattening ${fileInput} "
+  ${cmdEcho} -e "\n${LINENO} : Flattening rules...";
+  strStep="Flattening rules ${dirTarget}/${optFilePrefix}*.tmp-rule"
+  fnFlattenRules;
+  ${cmdEcho} -e "\n${LINENO} : Finished flattening rules...";
+fi;
+
+echo
+${cmdEcho} -e "${LINENO} : Merging is next\n"
+
+if [ ${optNocomment} -eq 0 || ${optNoMerge} -eq 0 ] ;
+then
+  strStep="Merging comments back with rules "
+  fnMergeComments
+  ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
+fi
+
+echo
+${cmdEcho} -e "${LINENO} : Recombine routine is next\n"
+
+if [ "${optRecombine}" == 1 ];
+then
+  strStep="Recombining ${fileInput} "
+  ${cmdEchoADHD} -n "Line ${LINENO} : Calling fnRecombine : ";
+  ${cmdEcho} "Recombining to ${outputfile}...";
+  strStep="Recombining split files "
+  fnRecombine;
+  ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
+  echo
+fi
+
+echo -e "\nIt is done."
+exit 0
+
+
+
