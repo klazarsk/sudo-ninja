@@ -21,6 +21,7 @@ anything except for effing up a system. Realistically, sudo-chopper works very w
 initial checkin, but: 
 
 a) not all features are implemented yet
+
 b) Some upcoming feature changes will temporarily break things horribly
 
 # Bottom Line:
