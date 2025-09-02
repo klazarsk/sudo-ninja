@@ -42,6 +42,11 @@ echo -e "
  ${otagBold} -d | --workingDirectory${ctag}
       working directory (not implemented yet)
 
+ ${otagBold}  -e | --expiration${ctag}
+      Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
+      non-8601 date format driven by client's preexisting data
+      Will implement 8601-friendly method later
+
  ${otagBold} -m | --monitor${ctag}
       Monitor tail of ls -lhtr of target directory.
       WARNING! This is VERY slow! Use ONLY for debugging!
@@ -60,7 +65,8 @@ echo -e "
       outputfile (for recombined sudoers file)
 
  ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
-      PREfix for the split files which are numbered in order found in --input file
+      PREfix for the split files which are numbered in order the rules are
+      found in --input file
 
  ${otagBold} -r | --recombine${ctag}
       NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
@@ -117,7 +123,7 @@ function fnSplitSudoers() {
   then
     ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
-    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' ${fileInput} | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
     echo
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
@@ -127,9 +133,13 @@ function fnSplitSudoers() {
       ${cmdEchoADHD} "Current file: ${curFile}";
       if  [ ! ${optNocomment} -eq 1 ];
       then
-        sed -En '/^(\s+)?#/p' ${curFile} > "${curFile}-comment";
+        if [ $(sed -En '/^(\s+)?#/p' "${curFile}" | wc -c ) -gt 0 ];
+        then
+          sed -En '/^(\s+)?#/p' "${curFile}" > "${curFile}-comment";
+        fi
       fi
-      sed -En '/^(\s+)?#/!p' ${curFile} > "${curFile}-rule";
+      sed -En '/^(\s+)?#/!p' "${curFile}" > "${curFile}-rule";
+#      mv ${curFile} ${curFile}.bak
       rm ${optVerbose} "${curFile}";
       ${cmdEchoADHD} "Line ${LINENO} : ${FUNCNAME[0]}";
       sed -En '/^#.*/p' "${curFile}-rule" > "${curFile}" ; sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;' "${curFile}" | tr -d '\n' >> "${curFile}-rule" ; echo >> "${curFile}-rule";
@@ -158,6 +168,37 @@ function fnFlattenRules() {
   done;
 
 }
+
+function fnSplitExpirations () {
+
+intRenumber=1;
+for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
+do
+  [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+  if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
+  then
+    ${cmdEchoADHD} "Zero or only one expiration tag in ${curFile}"
+    mv ${optVerbose} "${curFile}" "${dirTarget}/${optPrefix}${intRenumber}.remerged"
+    ((intRenumber++))
+  else
+    sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' ${curFile} | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optPrefix}" - '/EOR/' '{*}'
+    for fileCorrection in $(find ${dirTarget} -name "${optPrefix}*.tmp-correction" | sort -V);
+    do
+      ${cmdEchoADHD} "Multiple expiration tags in ${curFile}. Correcting."
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+      mv ${optVerbose} "$fileCorrection" "${optPrefix}${intRenumber}.remerged"
+      ((intRenumber++))
+    done
+  fi
+done
+unset intRenumber;
+for curFile in $(find "${dirTarget}" -name "${optPrefix}*.remerged" | sort -V);
+do
+  echo mv ${curFile} ${dirTarget}/$(basename --suffix "tmp-merged" "${curFile}")tmp-merged
+done
+
+}
+
 
 function fnRecombine() {
 
@@ -221,11 +262,12 @@ function fnMergeComments() {
     [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
     then
-      cat "${curFile}.tmp-comment" > "${curFile}.tmp-merged" && rm "${curFile}.tmp-comment";
+      fileMerge="${curFile}.tmp-merged";
+      cat "${curFile}.tmp-comment" > "${fileMerge}" && rm "${curFile}.tmp-comment";
     fi;
     if [ -f "${curFile}.tmp-rule" ];
     then
-      cat "${curFile}.tmp-rule" >> "${curFile}.tmp-merged"  && rm "${curFile}.tmp-rule";
+      cat "${curFile}.tmp-rule" >> "${fileMerge}"  && rm "${curFile}.tmp-rule";
     fi;
   done;
 
@@ -269,7 +311,10 @@ do
                     fileInput="$1";
                     ;;
     -d | --workingDirectory ) shift;
-                    dirWorking="$1"
+                    dirWorking="$1";
+                    ;;
+    -e | --expire) shift;
+                    optExpire="US";
                     ;;
     -f | --flatten ) optFlatten=1;
                     ;;
@@ -391,10 +436,15 @@ fi;
 echo
 ${cmdEcho} -e "${LINENO} : Merging is next\n"
 
-if [ ${optNocomment} -eq 0 || ${optNoMerge} -eq 0 ] ;
+if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
   strStep="Merging comments back with rules "
   fnMergeComments
+  if [ ! -z ${optExpire} ]
+  then
+    strStep="Regrouping and rules with expiration tags"
+    fnSplitExpirations
+  fi
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
 fi
 
