@@ -178,23 +178,22 @@ do
   if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
   then
     ${cmdEchoADHD} "Zero or only one expiration tag in ${curFile}"
-    mv ${optVerbose} "${curFile}" "${dirTarget}/${optPrefix}${intRenumber}.remerged"
+    mv ${optVerbose} "${curFile}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged"
     ((intRenumber++))
   else
-    sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' ${curFile} | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optPrefix}" - '/EOR/' '{*}'
-    for fileCorrection in $(find ${dirTarget} -name "${optPrefix}*.tmp-correction" | sort -V);
+    sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' ${curFile} | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}'
+    for fileCorrection in $(find ${dirTarget} -name "${optFilePrefix}*.tmp-correction" | sort -V);
     do
       ${cmdEchoADHD} "Multiple expiration tags in ${curFile}. Correcting."
       [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
-      mv ${optVerbose} "$fileCorrection" "${dirTarget}/${optPrefix}${intRenumber}.remerged"
+      mv ${optVerbose} "$fileCorrection" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged"
       ((intRenumber++))
     done
   fi
 done
-unset intRenumber;
-for curFile in $(find "${dirTarget}" -name "${optPrefix}*.remerged" | sort -V);
+for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.remerged" | sort -V);
 do
-  mv ${curFile} ${dirTarget}/$(basename --suffix "tmp-merged" "${curFile}")tmp-merged
+  mv ${optVerbose} "${curFile}" "${dirTarget}/$(basename --suffix "remerged" "${curFile}")tmp-merged"
 done
 
 }
