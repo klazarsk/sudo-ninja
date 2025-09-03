@@ -1,6 +1,16 @@
 #/bin/bash
-
+#
 #########################
+#
+# sudo-scalpel
+# Copyright 2025 Red Hat, Inc.
+#
+# Author: Kimberly Lazarski
+#
+# Part of Kimberly's sudo-ninja toolkit
+#
+#########################
+#
 #Setting formatting tags
 otagBold="\e[1m";
 ctag="\e[0m";
@@ -10,11 +20,29 @@ otagUline="\e[4m"
 otagItal="\e[3m"
 chrTab='\t'
 #########################
+
+#########################
+# Clear variables so we don't inherit settings from sourced runs:
+
 unset optVerbose optCommit
-eval {optCleanAliases,optCleanComments,optDelete,optVerbose,optCsvQuoted,intCounter}=0
-cmdEcho="true"
+eval {,optDelete,optVerbose,intCounter}=0
+unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
+# Initialize these variables for unary expressions:
+eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optLog}=0
+
+#########################
+#Set some sane defaults
+optQuiet="-s"
+cmdLog="true"
+set +x
+dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-chop started."
+cmdEcho=":"
+cmdTee=":"
 
 cmdLine="${0} ${@}"
+
 
 function fnSpinner() {
   if [ -z $gfxSpin ]
@@ -47,7 +75,7 @@ function fnSpinner() {
 fnIsUserActive() {
 
 
-  ${cmdEcho}  "Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
+  ${cmdEcho}  "Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}" | ${cmdTee} "${fileLog}"
   fnSpinner
   gawk -v IGNORECASE=1 -v myvar="${curUsername}" -v FPAT='[^,]*|\"([^\"]|\"\")*\"' '
   BEGIN {
@@ -92,7 +120,7 @@ fnDeleteRules() {
         sed -E ${optCommit} "/${patRule}/Id" "${fileSudoers}"
       fi
       if [ ${optCleanAliases} -eq 1 ]
-      then
+      then/usr/lib/systemd/user/localsearch-3.service
         strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in aliases"
         fnSpinner
         sed -E ${optCommit} "/${patAlias}/{ s/(${curUsername}[[:space:]]+?,)//Ig}" "${fileSudoers}"
@@ -113,45 +141,6 @@ fnDeleteRules() {
   # regex NOT substring: ^((?!error).)*$
 #(awk -v pattern="^#([[:space:]]?|Defaults|[[:alpha:]]+_Alias|%|$)"  '$0 ~ pattern {print $1}' "${fileSudoers}" | sort -Vu)
 }
-
-# fnDeleteRules() {
-#
-#   if [ ${optCleanComments} -eq 1 ]
-#   then
-#     patRule='^#[[:space:]]?(|Defaults|[[:alpha:]]+_Alias|%|$) { /'
-#   else
-#     patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
-#   fi
-#
-#   if [ ${optDelete} == 1 ];
-#   then
-#     while read curUsername;
-#     do
-#       strStep="Line ${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in sudoer rules"
-#       fnSpinner
-#       if ! fnIsUserActive
-#       then
-#         ${cmdEcho} "Removing ${curUsername}'s rules from ${fileSudoers}"
-#         sed -E ${optCommit} "/^[#]?(${curUsername}[[:space:]].*)$/Id" "${fileSudoers}"
-#       fi
-#     done  < <(awk -v pattern="${patRule}"  '$0 !~ pattern {print $1}' "${fileSudoers}" | sort -Vu)
-#     #done  < <(awk '$0 !~ /^(#|Defaults|[[:alpha:]]+_Alias|%|$)/ {print $1}' "${fileSudoers}" | sort -Vu)
-#   fi
-#
-#   if [ ${optCleanAliases} -eq 1 ]
-#   then
-#     while read curUsername;
-#     do
-#       strStep="Line ${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in aliases"
-#       fnSpinner
-#       if ! fnIsUserActive
-#       then
-#         sed -E ${optCommit} "/^([[:alpha:]]+_Alias[[:space:]][[:alnum:]_ -]+=[[:space:]]+?)/{s/(${curUsername}[[:space:]]+?,)//Ig}" "${fileSudoers}"
-#       fi
-#     done  < <(awk -v pattern="^#([[:space:]]?|Defaults|[[:alpha:]]+_Alias|%|$)"  '$0 ~ pattern {print $1}' "${fileSudoers}" | sort -Vu)
-#   fi
-# }
-
 
 function fnRemoveRules() {
 
@@ -197,7 +186,7 @@ function fnRemoveRules() {
 fnHelp() {
 echo -e "
     ${otagBold}-h | --help${ctag}
-       Display this screen
+        Display this screen
 
     ${otagBold}-a | --active${ctag}
        The file containing the list of words for the search spec (words to find)
@@ -236,6 +225,10 @@ echo -e "
     ${otagBold}-r | --rulesdirectory ${ctag}${otagItal}[directory]${ctag}
        This is the directory path where inactive rule files are
        located. This assumes that you've --split the sudoers file.
+
+    ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
+       Specifying logging will capture most output and log most actions
+       to the specified filename.
 
     ${otagBold}-m | --move ${ctag}${otagItal}[directory]${ctag}
        This is the directory path where inactive rule files should
@@ -298,6 +291,12 @@ do
                       dirMoveTarget="$1"
                       ;;
     -q | --quoted )   optCsvQuoted="1"
+                      ;;
+    -R | --report | --log ) shift;
+                      fileLog="${1}"
+                      cmdLog="echo"
+                      cmdTee="tee"
+                      optLog="1"
                       ;;
     -s | --sudoersfile ) shift;
                       fileSudoers="$1";

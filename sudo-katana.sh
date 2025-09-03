@@ -1,6 +1,31 @@
 #!/bin/bash
-
+#
 #########################
+#
+# sudo-chop
+# Copyright 2025 Red Hat, Inc.
+#
+# Author: Kimberly Lazarski
+#
+# Part of Kimberly's sudo-ninja toolkit
+#
+#########################
+#
+# sudo-katana
+#
+# Copyright 2025 Red Hat, Inc.
+#
+# Author: Kimberly Lazarski
+#
+# Part of Kimberly's sudo-ninja toolkit
+#
+# Description: Sudo sword!
+#
+# This tool is useful for, among other things,
+# Slicing, dicing, and flattening monolithic sudoer files.
+#
+#########################
+#
 # Setting formatting tags
 otagBold="\e[1m";
 ctag="\e[0m";
@@ -9,6 +34,7 @@ otagRevRed='\e[0;101m'
 otagUline="\e[4m"
 otagItal="\e[3m"
 #########################
+#
 # Clear variables so we don't inherit settings from sourced runs:
 
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
@@ -17,17 +43,26 @@ eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optF
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
 
 #########################
-Set some sane defaults
+#
+# Set some sane defaults
+#
+# Unless [ -v | --verbose ] is enabled, "quiet" mode is used for commands
+# and nonessential echo commands are substituted with do-nothing "true"
+#
+cmdEcho="true"
+cmdWordVomit="true"
+optQuiet="--quiet"
 optQuiet="-s"
 cmdLog="true"
 set +x
 dtStart="$(date +"%s")";
-date --date="@${dtStart}"
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "${dtStart8601}: sudo-chop started."
-
+echo "${dtStart8601}: sudo-katana started."
+#
+##############################
 # Ensure utilities we rely upon are present
-for cmdTest in sed awk grep visudo tr ;
+#
+for cmdTest in sed awk grep visudo tr gawk;
 do
   if ! which ${cmdTest} > /dev/null 2>&1;
   then
@@ -42,90 +77,98 @@ fnHelp() {
 
 echo -e "
 
- ${otagBold} -h | --help${ctag}
-      helpful words and stuff (this screen)
+    ${otagBold} -h | --help${ctag}
+        helpful words and stuff (this screen)
 
- ${otagBold} -s | --input ${ctag}${otagItal}[filename]${ctag}
-      Input file you want to process
+    ${otagBold} -s | --input ${ctag}${otagItal}[filename]${ctag}
+        Input file you want to process
 
- ${otagBold} -d | --workingDirectory${ctag}
-      working directory (not implemented yet)
+    ${otagBold} -d | --workingDirectory${ctag}
+        working directory (not implemented yet)
 
- ${otagBold}  -e | --expiration${ctag}
-      Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
-      non-8601 date format driven by client's preexisting data
-      Will implement 8601-friendly method later
+    ${otagBold}  -e | --expiration${ctag}
+        Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
+        non-8601 date format driven by client's preexisting data
+        Will implement 8601-friendly method later
 
- ${otagBold} -m | --monitor${ctag}
-      Monitor tail of ls -lhtr of target directory.
-      WARNING! This is VERY slow! Use ONLY for debugging!
+    ${otagBold} -m | --monitor${ctag}
+        Monitor tail of ls -lhtr of target directory.
+        WARNING! This is VERY slow! Use ONLY for debugging!
 
- ${otagBold} -M | --nomerge${ctag}
-      Don't merge the comments back in - this is good for
-      further processing of the split files before recombining.
+    ${otagBold} -M | --nomerge${ctag}
+        Don't merge the comments back in - this is good for
+        further processing of the split files before recombining.
 
- ${otagBold} -N | --nuke${ctag}
-      Nuke from orbit to be sure
+    ${otagBold} -N | --nuke${ctag}
+        Nuke from orbit to be sure
 
- ${otagBold} -n | --nocomment${ctag}
-      Strip out all comments
+    ${otagBold} -n | --nocomment${ctag}
+        Strip out all comments
 
- ${otagBold} -o | --outputfile ${ctag}${otagItal}[filename]${ctag}
-      outputfile (for recombined sudoers file)
+    ${otagBold} -o | --outputfile ${ctag}${otagItal}[filename]${ctag}
+        outputfile (for recombined sudoers file)
 
- ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
-      PREfix for the split files which are numbered in order the rules are
-      found in --input file
+    ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
+        PREfix for the split files which are numbered in order the rules are
+        found in --input file
 
- ${otagBold} -r | --recombine${ctag}
-      NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
+    ${otagBold} -r | --recombine${ctag}
+        NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
 
- ${otagBold} -R | --report | --log ${ctag}{$otagItal}[logfile]${ctag}
-      NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
+    ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
+        Specifying logging will capture most output and log most actions
+        to the specified filename.
 
+    ${otagBold} -s | --split${ctag}
+        disassemble
 
- ${otagBold} -s | --split${ctag}
-      disassemble
+    ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
+        target directory to place split files
 
- ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
-      target directory to place split files
+    ${otagBold} -v | --verbose${ctag}
+        words and stuff for debugging
 
- ${otagBold} -v | --verbose${ctag}
-      words and stuff for debugging
+    ${otagBold} -vv | --verbose11${ctag}
+        extra words and stuff (Word vomit!)
 
- ${otagBold} -vv | --verbose11${ctag}
-      extra words and stuff (Word vomit!)
-
- ${otagBold} -vvv | --plaid${ctag}
-      tl;dr
+    ${otagBold} -vvv | --plaid${ctag}
+        tl;dr
 "
 }
 
 function fnSpinner() {
-  if [ -z "${gfxSpin}" ]
+
+# Check if we're running verbose mode.
+# if we are, don't run the spinner!
+
+  if [ -n ${optVerbose} ];
   then
-    gfxSpin="/"
+    if [ -z "${gfxSpin}" ]
+    then
+      gfxSpin="/"
+    fi
+
+    echo -en "${otagBold}${strStep}    ${gfxSpin} ${ctag}\r"
+    case "${gfxSpin}" in
+      "/" ) gfxSpin="-"
+        ;;
+      "-" ) gfxSpin="\\"
+        ;;
+      "\\" ) gfxSpin="|"
+        ;;
+      "|" ) gfxSpin="/"
+        ;;
+      "/" ) gfxSpin="-"
+        ;;
+      "-" ) gfxSpin="\\"
+        ;;
+      "\\" ) gfxSpin="|"
+        ;;
+      "|" ) gfxSpin="/"
+        ;;
+    esac;
   fi
 
-  echo -en "${otagBold}${strStep}    ${gfxSpin} ${ctag}\r"
-  case "${gfxSpin}" in
-    "/" ) gfxSpin="-"
-      ;;
-    "-" ) gfxSpin="\\"
-      ;;
-    "\\" ) gfxSpin="|"
-      ;;
-    "|" ) gfxSpin="/"
-      ;;
-    "/" ) gfxSpin="-"
-      ;;
-    "-" ) gfxSpin="\\"
-      ;;
-    "\\" ) gfxSpin="|"
-      ;;
-    "|" ) gfxSpin="/"
-      ;;
-  esac;
 }
 
 function fnSplitSudoers() {
@@ -197,7 +240,7 @@ function fnSplitExpirations () {
     else
       echo -e "\n\nMore than two EXP tags found in ${curFile}, processing...\n";
       IFS='\0';
-        sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+      sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
       unset IFS;
       for fileCorrection in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
       do
@@ -293,17 +336,8 @@ function fnMergeComments() {
 
 }
 
-
-
 # END FUNCTION DEFINITIONS
-
-##############################
 #
-# Unless [ -v | --verbose ] is enabled, "quiet" mode is used for commands
-# and nonessential echo commands are substituted with do-nothing "true"
-cmdEcho="true"
-cmdWordVomit="true"
-optQuiet="--quiet"
 
 ##############################
 #
@@ -468,7 +502,7 @@ if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
   strStep="Merging comments back with rules ";
   fnMergeComments;
-  if [ -n ${optExpire} ];
+  if [ -n "${optExpire}" ];
   then
     strStep="Regrouping and rules with expiration tags";
     fnSplitExpirations;
@@ -493,5 +527,10 @@ fi
 echo -e "\nIt is done."
 exit 0
 
-
+dtFinish="$(date +"%s")";
+dtDuration=(( ${dtFinish} - ${dtStart} ))
+dtDurationMinutes=(( ${dtDuration} / 60 ))
+dtDurationSeconds=(( ${dtDuration} % 60 ))
+dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601}, taking ${dtDurationMinutes}:${dtDurationSeconds}."
 

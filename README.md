@@ -2,17 +2,30 @@
 
 This file 
 
-# sudo-chopper
+# sudo-katana
 
 Not this file.
 
-Chops, slices, dices, splits, and reassembles sudoer files, and flattens multiline sudoer rules.
+Chops, slices, dices, splits, and reassembles sudoer files, and flattens multiline 
+sudoer rules.
 
-# sudo-scalpel
+# sudo-taijutsu.sh
+
+
 
 Also not this file. ;) 
 
 Seeks, relocates, destroys. 
+
+# sudo-choho.sh
+
+Named for the Ninja art of chōhō, or espionage.
+
+Sudo espionage! Analyze, report on, and dink around 
+with sudoer files. Do nifty stuff like count how many times
+a user appears in the sudoers file! 
+
+..and you guessed it. Also not this README.md file.
 
 # Current Status: 
 
