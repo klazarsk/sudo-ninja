@@ -22,8 +22,8 @@ optQuiet="-s"
 cmdLog="true"
 set +x
 dtStart="$(date +"%s")";
-date --date=${dtStart}
-dtStart8601="$(date --date=${dtStart} +"%Y-%m-%d_%H.%M.%S.%s")"
+date --date="@${dtStart}"
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-chop started."
 
 # Ensure utilities we rely upon are present
@@ -33,7 +33,7 @@ do
   then
     echo -e "${otagBold}${otagRed}${cmdTest}${ctag}${otagRed} is not present; please install it then re-run this script.${ctag}";
     echo "identifying package: dnf provides */${cmdTest}"
-    dnf provides */${cmdTest}
+    dnf provides "*/${cmdTest}"
     exit 1
   fi;
 done;
@@ -102,7 +102,7 @@ echo -e "
 }
 
 function fnSpinner() {
-  if [ -z $gfxSpin ]
+  if [ -z "${gfxSpin}" ]
   then
     gfxSpin="/"
   fi
@@ -132,7 +132,7 @@ function fnSplitSudoers() {
 
   ${cmdEcho} "Entered ${FUNCNAME[0]}"
   ${cmdWordVomit}  "Line ${LINENO} : ${FUNCNAME[0]} : \${dirTarget} ${dirTarget}, \${optFilePrefix},${optFilePrefix}";
-  if [ $(find "${dirTarget}" -name "${optFilePrefix}*" | wc -l) == 0 ] ;
+  if [ $(find "${dirTarget}" -name "${optFilePrefix}*" | wc -l) -eq 0 ] ;
   then
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
@@ -141,12 +141,12 @@ function fnSplitSudoers() {
     echo;
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
     do
-      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n 5 || fnSpinner
+      [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n 5 || fnSpinner
       ${cmdWordVomit} -e "\nLine ${LINENO} : ${FUNCNAME[0]} : "
       ${cmdWordVomit} "Current file: ${curFile}";
-      if  [ ! ${optNocomment} -eq 1 ];
+      if  [ "${optNocomment}" -ne 1 ];
       then
-        if [ $(sed -En '/^(\s+)?#/p' "${curFile}" | wc -c ) -gt 0 ];
+        if [ "$(sed -En '/^(\s+)?#/p' "${curFile}" | wc -c )" -gt 0 ];
         then
           sed -En '/^(\s+)?#/p' "${curFile}" > "${curFile}-comment";
         fi
@@ -173,9 +173,9 @@ function fnFlattenRules() {
   echo;
   for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
   do
-    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     ${cmdWordVomit} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
-    sed -E '/^#.*/p' ${curFile} | sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
+    sed -E '/^#.*/p' "${curFile}" | sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
     echo >> "${curFile}-rule";
     mv ${optVerbose} "${curFile}-rule" "${curFile}";
   done;
@@ -188,7 +188,7 @@ function fnSplitExpirations () {
   intRenumber=1;
   for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
   do
-    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
     if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
     then
       ${cmdWordVomit} "Zero or only one expiration tag in ${curFile}, processing...\n";
@@ -202,7 +202,7 @@ function fnSplitExpirations () {
       for fileCorrection in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
       do
         ${cmdWordVomit} "Multiple expiration tags in ${curFile}. Correcting."; sleep .3;
-        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
+        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
         mv ${optVerbose} "${fileCorrection}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
         ((intRenumber++));
       done;
@@ -242,12 +242,12 @@ function fnRecombine() {
   fi;
 
 
-  if [ $(find ${dirTarget} -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ne 0 ]
+  if [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ne 0 ]
   then
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
-    for curFile in $(find ${dirTarget} -name ${optFilePrefix}*.tmp-merged | sort -V);
+    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | sort -V);
     do
-        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
         ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}";
         cat "${curFile}" >> "${optOutputFile}";
         echo >> "${optOutputFile}";
@@ -258,7 +258,7 @@ function fnRecombine() {
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
     do
       [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
-      if [[ "${curFile}" == *".tmp-comment" ]] && [ ! ${optNocomment} -eq 1 ];
+      if [[ "${curFile}" == *".tmp-comment" ]] && [ ${optNocomment} -ne 1 ];
       then
         ${cmdWordVomit} -e "Line ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}"
         cat "${curFile}" >> "${optOutputFile}";
@@ -279,7 +279,7 @@ function fnMergeComments() {
 
   for curFile in $(find "${dirTarget}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
-    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
     then
       fileMerge="${curFile}.tmp-merged";
@@ -313,7 +313,7 @@ if [[ -z "$@" ]];
 then
   echo -e "${otagRed}You supplied no command arguments; unable to proceed.${ctag}";
   echo "Your command line:";
-  echo -e "\n\t$cmdLine\n";
+  echo -e "\n\t${cmdLine}\n";
   fnHelp;
   exit 1;
 fi;
@@ -328,10 +328,10 @@ do
                     exit 0;
                     ;;
     -s | --input )  shift;
-                    fileInput="$1";
+                    fileInput="${1}";
                     ;;
     -d | --workingDirectory ) shift;
-                    dirWorking="$1";
+                    dirWorking="${1}";
                     ;;
     -e | --expire) shift;
                     optExpire="US";
@@ -347,10 +347,10 @@ do
     -n | --nocomment ) optNocomment=1;
                     ;;
     -o | --outputfile ) shift;
-                    optOutputFile="$1";
+                    optOutputFile="${1}";
                     ;;
     -p | --prefix ) shift;
-                    optFilePrefix="$1";
+                    optFilePrefix="${1}";
                     ;;
     -r | --recombine ) optRecombine=1;
                     ;;
@@ -402,7 +402,7 @@ then
   ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
 
   # If target directory doesn't exist, create it
-  if [ ! -z ${dirTarget} ] && [ ! -d "${dirTarget}" ];
+  if [ -n "${dirTarget}" ] && [ ! -d "${dirTarget}" ];
   then
     ${cmdEcho} "${dirTarget} does not exist; creating it now:";
     mkdir ${optVerbose} "${dirTarget}";
@@ -430,9 +430,9 @@ then
     elif [ -z "${optFilePrefix}" ];
     then
       ${cmdWordVomit} -e "\nLine ${LINENO}"
-      echo "${otagRed}Please include a \"--prefix [prefix]\" argument on your command.${ctag}";
+      echo "${otagRed}Please include a ${ctag}${otagBold}--prefix${ctag}${otagItal} [prefix]${ctag} argument on your command.${ctag}";
       echo "Your command line:";
-      echo -e "\t ${cmdLine}\n";-
+      echo -e "\t ${cmdLine}\n";
       exit 1;
     else
       ${cmdWordVomit} -e "\nLine ${LINENO}"
@@ -448,7 +448,7 @@ ${cmdEcho} -e "\n${LINENO} : Flatten routine is next"
 if [ ${optFlatten} -eq 1 ];
 then
   # If target directory doesn't exist, bail
-  if [ ! -z ${dirTarget} ] && [ ! -d "${dirTarget}" ];
+  if [ -n "${dirTarget}" ] && [ ! -d "${dirTarget}" ];
   then
     ${cmdEcho} "${dirTarget} does not exist; please check your ${otagItal}--target [filepath]${ctag} and try again."
     exit 1
@@ -468,7 +468,7 @@ if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
   strStep="Merging comments back with rules ";
   fnMergeComments;
-  if [ ! -z ${optExpire} ];
+  if [ -n ${optExpire} ];
   then
     strStep="Regrouping and rules with expiration tags";
     fnSplitExpirations;
@@ -483,7 +483,7 @@ if [ "${optRecombine}" == 1 ];
 then
   strStep="Recombining ${fileInput} "
   ${cmdWordVomit} -n "Line ${LINENO} : Calling fnRecombine : ";
-  ${cmdEcho} "Recombining to ${outputfile}...";
+  ${cmdEcho} "Recombining to ${optOutputFile}...";
   strStep="Recombining split files ";
   fnRecombine;
   ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
