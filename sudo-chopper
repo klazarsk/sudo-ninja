@@ -13,7 +13,8 @@ otagItal="\e[3m"
 
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep;
 # Initialize these variables for unary expressions:
-eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optQuiet,optRecombine,optFlatten}=0
+eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten}=0
+optQuiet="-s"
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
 
 set +x
@@ -125,10 +126,10 @@ function fnSplitSudoers() {
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
-    echo
+    echo;
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
     do
-      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n 5 || fnSpinner
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n 5 || fnSpinner
       ${cmdEchoADHD} -e "\nLine ${LINENO} : ${FUNCNAME[0]} : "
       ${cmdEchoADHD} "Current file: ${curFile}";
       if  [ ! ${optNocomment} -eq 1 ];
@@ -160,7 +161,7 @@ function fnFlattenRules() {
   echo;
   for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
   do
-    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     ${cmdEchoADHD} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
     sed -E '/^#.*/p' ${curFile} | sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
     echo >> "${curFile}-rule";
@@ -171,35 +172,41 @@ function fnFlattenRules() {
 
 function fnSplitExpirations () {
 
-intRenumber=1;
-for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
-do
-  [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
-  if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
-  then
-    ${cmdEchoADHD} "Zero or only one expiration tag in ${curFile}"
-    mv ${optVerbose} "${curFile}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged"
-    ((intRenumber++))
-  else
-    sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' ${curFile} | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}'
-    for fileCorrection in $(find ${dirTarget} -name "${optFilePrefix}*.tmp-correction" | sort -V);
-    do
-      ${cmdEchoADHD} "Multiple expiration tags in ${curFile}. Correcting."
-      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
-      mv ${optVerbose} "$fileCorrection" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged"
-      ((intRenumber++))
-    done
-  fi
-done
-for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.remerged" | sort -V);
-do
-  mv ${optVerbose} "${curFile}" "${dirTarget}/$(basename --suffix "remerged" "${curFile}")tmp-merged"
-done
+  LINES=5;
+  intRenumber=1;
+  for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
+  do
+    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
+    if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
+    then
+      ${cmdEchoADHD} "Zero or only one expiration tag in ${curFile}, processing...\n";
+      mv ${optVerbose} "${curFile}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
+      ((intRenumber++));
+    else
+      echo -e "\n\nMore than two EXP tags found in ${curFile}, processing...\n";
+      IFS='\0';
+        sed -E 's/^([#].*EXP\s+[0-9].*)$/EOR\o0\n\1/g' "${curFile}" | csplit --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+      unset IFS;
+      for fileCorrection in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
+      do
+        ${cmdEchoADHD} "Multiple expiration tags in ${curFile}. Correcting."; sleep ;
+        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner;
+        mv ${optVerbose} "$fileCorrection" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
+        ((intRenumber++));
+      done;
+    fi
+  done;
+  for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.remerged" | sort -V);
+  do
+    mv ${optVerbose} "${curFile}" "${dirTarget}/$(basename --suffix "remerged" "${curFile}")tmp-merged";
+  done;
 
 }
 
 
 function fnRecombine() {
+
+  LINES=10;
 
   ${cmdEchoADHD} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
   unset curFile;
@@ -226,7 +233,7 @@ function fnRecombine() {
     ${cmdEchoADHD} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
     for curFile in $(find ${dirTarget} -name ${optFilePrefix}*.tmp-merged | sort -V);
     do
-        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+        [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
         ${cmdEchoADHD} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}";
         cat "${curFile}" >> "${optOutputFile}";
         echo >> "${optOutputFile}";
@@ -234,9 +241,9 @@ function fnRecombine() {
 
   else
     ${cmdEchoADHD} "Line: ${LINENO} : ${FUNCNAME[0]} : ";
-    for curFile in $(find ${dirTarget} -name ${optFilePrefix}*.tmp-comment -o -name ${optFilePrefix}*.tmp-rule | sort -V);
+    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
     do
-      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
       if [[ "${curFile}" == *".tmp-comment" ]] && [ ! ${optNocomment} -eq 1 ];
       then
         ${cmdEchoADHD} -e "Line ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}"
@@ -256,9 +263,9 @@ function fnMergeComments() {
 
   ${cmdEchoADHD} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
 
-  for curFile in $(find ${dirTarget} -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  for curFile in $(find "${dirTarget}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
-    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr ${dirTarget} | tail -n ${LINES} || fnSpinner
+    [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
     then
       fileMerge="${curFile}.tmp-merged";
@@ -345,15 +352,18 @@ do
     -vv | --verbose11 ) optVerbose="-v"
                     cmdEcho="echo";
                     cmdEchoADHD="echo";
+                    unset optQuiet;
                     ;;
     -vv | --verbose11 ) optVerbose="-v"
                     cmdEcho="echo";
                     cmdEchoADHD="echo";
+                    unset optQuiet;
                     ;;
     -vvv | --plaid ) set -x;
                     optVerbose="-v";
                     cmdEcho="echo";
                     cmdEchoADHD="echo";
+                    unset optQuiet;
                     ;;
     * )
                     echo -e "${otagRed} \n\tI couldn't understand your command. Please note if you specified an argument with spaces ";
@@ -437,25 +447,25 @@ ${cmdEcho} -e "${LINENO} : Merging is next\n"
 
 if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
-  strStep="Merging comments back with rules "
-  fnMergeComments
-  if [ ! -z ${optExpire} ]
+  strStep="Merging comments back with rules ";
+  fnMergeComments;
+  if [ ! -z ${optExpire} ];
   then
-    strStep="Regrouping and rules with expiration tags"
-    fnSplitExpirations
-  fi
+    strStep="Regrouping and rules with expiration tags";
+    fnSplitExpirations;
+  fi;
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
-fi
+fi;
 
 echo
-${cmdEcho} -e "${LINENO} : Recombine routine is next\n"
+${cmdEcho} -e "${LINENO} : Recombine routine is next\n";
 
 if [ "${optRecombine}" == 1 ];
 then
   strStep="Recombining ${fileInput} "
   ${cmdEchoADHD} -n "Line ${LINENO} : Calling fnRecombine : ";
   ${cmdEcho} "Recombining to ${outputfile}...";
-  strStep="Recombining split files "
+  strStep="Recombining split files ";
   fnRecombine;
   ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
   echo
