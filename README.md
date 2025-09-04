@@ -1,6 +1,17 @@
-# README.md
+# About this project 
 
-This file 
+This toolkit will be a suite of utilities for manipulating large
+monolithic sudoers files, inspired by the needs of one of my clients.
+
+## About the naming convention
+
+In the spirit of my love for martial arts, I've decided to name
+this toolkit "sudo ninja" with the individual utilities named
+after either a tool, art, or technique.
+
+While the art I practice is Tae Kwan Do, I decided to go with a
+ninjutsu theme because ninja terminology is better known in
+popular culture and the vocabulary is more expansive.
 
 # sudo-katana
 
@@ -10,8 +21,6 @@ Chops, slices, dices, splits, and reassembles sudoer files, and flattens multili
 sudoer rules.
 
 # sudo-taijutsu.sh
-
-
 
 Also not this file. ;) 
 
@@ -26,6 +35,14 @@ with sudoer files. Do nifty stuff like count how many times
 a user appears in the sudoers file! 
 
 ..and you guessed it. Also not this README.md file.
+
+The current version does nothing yet; I only threw a few code fragments in for a 
+placeholder.
+
+# README.md
+
+This file 
+
 
 # Current Status: 
 

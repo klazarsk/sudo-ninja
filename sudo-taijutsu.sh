@@ -44,33 +44,7 @@ cmdTee=":"
 cmdLine="${0} ${@}"
 
 
-function fnSpinner() {
-  if [ -z $gfxSpin ]
-  then
-    gfxSpin="/"
-  fi
-
-  printf "\r\033[2K"
-  printf " %-90.90b %-2.2s \r" "${strStep}"    "${gfxSpin} "
-  case "${gfxSpin}" in
-    "/" ) gfxSpin="-"
-      ;;
-    "-" ) gfxSpin="\\"
-      ;;
-    "\\" ) gfxSpin="|"
-      ;;
-    "|" ) gfxSpin="/"
-      ;;
-    "/" ) gfxSpin="-"
-      ;;
-    "-" ) gfxSpin="\\"
-      ;;
-    "\\" ) gfxSpin="|"
-      ;;
-    "|" ) gfxSpin="/"
-      ;;
-  esac;
-}
+h
 
 fnIsUserActive() {
 
