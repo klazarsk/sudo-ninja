@@ -54,10 +54,12 @@ cmdWordVomit="true"
 optQuiet="--quiet"
 optQuiet="-s"
 cmdLog="true"
+cmdDate='date +%Y-%m-%d_%H:%M:%S'
 set +x
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-katana started."
+cmdLine="${0} ${@}"
 #
 ##############################
 # Ensure utilities we rely upon are present
@@ -148,7 +150,7 @@ function fnSpinner() {
       gfxSpin="/"
     fi
 
-    echo -en "${otagBold}${strStep}    ${gfxSpin} ${ctag}\r"
+    echo -en "${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r"
     case "${gfxSpin}" in
       "/" ) gfxSpin="-"
         ;;
@@ -244,7 +246,7 @@ function fnSplitExpirations () {
       unset IFS;
       for fileCorrection in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
       do
-        ${cmdWordVomit} "Multiple expiration tags in ${curFile}. Correcting."; sleep .3;
+        ${cmdWordVomit} "$(${cmdDate}) Multiple expiration tags in ${curFile}. Correcting."; sleep .3;
         [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
         mv ${optVerbose} "${fileCorrection}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
         ((intRenumber++));
@@ -396,7 +398,7 @@ do
     -s | --split )  optSplit=1;
                     ;;
     -t | --targetdir ) shift;
-                    dirTarget="$1";
+                    dirTarget="${1}";
                     ;;
     -v | --verbose ) optVerbose="-v";
                     cmdEcho="echo";
@@ -431,6 +433,7 @@ done;
 
 ${cmdWordVomit} -e "\nLine ${LINENO}; optSplit = ${optSplit}"
 
+${cmdWordVomit} -e "\nLine ${LINENO}: Checking for input filename" ;
 if [ ${optSplit} -eq 1 ];
 then
   ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
@@ -448,14 +451,18 @@ then
   fi;
   if [ -z "${fileInput}" ];
   then
-    ${cmdWordVomit} -e "\nLine ${LINENO}: Checking for input filename"
+    if [ "${optRecombine}" -eq 1 ] && [ -n "${optFilePrefix}" ] && [ -d "${dirTarget}" ] && [ "$(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l)" -ge 1 ] ;
+    then
+      echo "Line ${LINENO} : No --input argument present, but --recombine, --targetdir, and --prefix specified. Attempting to recombine preexisting split files."
+      ${cmdEcho} "Line ${LINENO} :\${optRecombine}=${optRecombine} : \${optFilePrefix}=${optFilePrefix} : \${dirTarget}=${dirTarget} : $(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l) files found"
 
-    echo "Please supply an ${otagRed}--input [filename]${ctag}"
-    echo "Your command line:";
-    echo "\t ${cmdLine}\n";
-    exit 1;
+    else
+      echo -e "\nLine ${LINENO} :Please supply an ${otagRed}--input [filename]${ctag}"
+      echo -e "\nYour command line:";
+      echo -e "\n\t ${cmdLine}\n";
+      exit 1;
+    fi
   else
-    true
     if [ ! -f "${fileInput}" ];
     then
      ${cmdWordVomit} -e "\nLine ${LINENO} : \${fileInput} ${fileInput}"
@@ -463,10 +470,9 @@ then
       exit 1;
     elif [ -z "${optFilePrefix}" ];
     then
-      ${cmdWordVomit} -e "\nLine ${LINENO}"
-      echo "${otagRed}Please include a ${ctag}${otagBold}--prefix${ctag}${otagItal} [prefix]${ctag} argument on your command.${ctag}";
-      echo "Your command line:";
-      echo -e "\t ${cmdLine}\n";
+      echo "Line ${LINENO} :${otagRed}Please include a ${ctag}${otagBold}--prefix${ctag}${otagItal} [prefix]${ctag} argument on your command.${ctag}";
+      echo "\nYour command line:";
+      echo -e "\n\t ${cmdLine}\n";
       exit 1;
     else
       ${cmdWordVomit} -e "\nLine ${LINENO}"
@@ -477,7 +483,7 @@ then
   fi
 fi
 
-${cmdEcho} -e "\n${LINENO} : Flatten routine is next"
+${cmdEcho} -e "\n${LINENO} : $(${cmdDate}) : Flatten routine is next"
 
 if [ ${optFlatten} -eq 1 ];
 then
@@ -488,9 +494,10 @@ then
     exit 1
   fi
 
-  strStep="Flattening ${fileInput} "
-  ${cmdEcho} -e "\n${LINENO} : Flattening rules...";
-  strStep="Flattening rules ${dirTarget}/${optFilePrefix}*.tmp-rule"
+  strStep="Flattening ${fileInput} ";
+  echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
+
+  strStep="Flattening rules ${dirTarget}/${optFilePrefix}*.tmp-rule";
   fnFlattenRules;
   ${cmdEcho} -e "\n${LINENO} : Finished flattening rules...";
 fi;
@@ -501,6 +508,7 @@ ${cmdEcho} -e "${LINENO} : Merging is next\n"
 if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
   strStep="Merging comments back with rules ";
+  echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
   fnMergeComments;
   if [ -n "${optExpire}" ];
   then
@@ -515,22 +523,21 @@ ${cmdEcho} -e "${LINENO} : Recombine routine is next\n";
 
 if [ "${optRecombine}" == 1 ];
 then
-  strStep="Recombining ${fileInput} "
+  strStep="Recombining ${fileInput} to ${optOutputFile}..."
   ${cmdWordVomit} -n "Line ${LINENO} : Calling fnRecombine : ";
-  ${cmdEcho} "Recombining to ${optOutputFile}...";
-  strStep="Recombining split files ";
+  echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
   fnRecombine;
   ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
   echo
 fi
 
 echo -e "\nIt is done."
-exit 0
 
 dtFinish="$(date +"%s")";
-dtDuration=(( ${dtFinish} - ${dtStart} ))
-dtDurationMinutes=(( ${dtDuration} / 60 ))
-dtDurationSeconds=(( ${dtDuration} % 60 ))
+dtDuration=$(( ${dtFinish} - ${dtStart} ))
+dtDurationMinutes=$(( ${dtDuration} / 60 ))
+dtDurationSeconds=$(( ${dtDuration} % 60 ))
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601}, taking ${dtDurationMinutes}:${dtDurationSeconds}."
+echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}:${dtDurationSeconds}."
 
+exit 0
