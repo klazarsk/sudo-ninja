@@ -98,7 +98,7 @@ fnIsUserActive() {
 
   strStep="Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
   ${cmdEcho} "${strStep}"
-  #fnSpinner
+  fnSpinner
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
     ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
