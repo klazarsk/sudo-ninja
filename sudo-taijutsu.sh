@@ -2,12 +2,18 @@
 #
 #########################
 #
-# sudo-scalpel
+# sudo-taijutsu
 # Copyright 2025 Red Hat, Inc.
 #
 # Author: Kimberly Lazarski
 #
 # Part of Kimberly's sudo-ninja toolkit
+#
+# This utility can identify invalid users (against a reference account list)
+# and delete rules and surgically remove invalid users from user aliases.
+#
+# The utility will be able to validate individual rules via
+# visudo --check --file as part of its process (not implemented yet).
 #
 #########################
 #
@@ -20,15 +26,23 @@ otagUline="\e[4m"
 otagItal="\e[3m"
 chrTab='\t'
 #########################
+#
+# This is a customizable word filter, to filter out words that our initial
+# attempt at deleting non-account words from the sudoers file missed, since
+# it's impossible to arrive at a one-size-fits-all without a massive increase
+# in lines of code (for which bash isn't terribly efficient)
 
+patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|word6|word7|etc'
+
+#
 #########################
 # Clear variables so we don't inherit settings from sourced runs:
 
 unset optVerbose optCommit
-eval {,optDelete,optVerbose,intCounter}=0
+eval {optDelete,optVerbose,intCounter}=0
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
 # Initialize these variables for unary expressions:
-eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optLog}=0
+eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0
 
 #########################
 #Set some sane defaults
@@ -40,44 +54,89 @@ dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-chop started."
 cmdEcho=":"
 cmdTee=":"
-
+cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 
 
-h
+function fnSpinner() {
+  if [ -z $gfxSpin ]
+  then
+    gfxSpin="/"
+  fi
+
+  printf "\r\033[2K"
+  printf " %-90.90b %-2.2s \r" "${strStep}"    "${gfxSpin} "
+  case "${gfxSpin}" in
+    "/" ) gfxSpin="-"
+      ;;
+    "-" ) gfxSpin="\\"
+      ;;
+    "\\" ) gfxSpin="|"
+      ;;
+    "|" ) gfxSpin="/"
+      ;;
+    "/" ) gfxSpin="-"
+      ;;
+    "-" ) gfxSpin="\\"
+      ;;
+    "\\" ) gfxSpin="|"
+      ;;
+    "|" ) gfxSpin="/"
+      ;;
+  esac;
+}
+
+function fnGetUserList() {
+
+arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sort -Vu )
+#; for i in ${arrAccountList} ; do echo "Account: ${i}" ; done
+
+}
 
 fnIsUserActive() {
 
 
-  ${cmdEcho}  "Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}" | ${cmdTee} "${fileLog}"
-  fnSpinner
-  gawk -v IGNORECASE=1 -v myvar="${curUsername}" -v FPAT='[^,]*|\"([^\"]|\"\")*\"' '
-  BEGIN {
-    notfound = 1
-  }
-  {
-    for (i = 1; i <= NF; i++) {
-      field_content = $i
-      if (substr(field_content, 1, 1) == "\"") {
-        field_content = substr(field_content, 2, length(field_content) - 2)
-      }
+  strStep="Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
+  ${cmdEcho} "${strStep}"
+  #fnSpinner
+  if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
+  then
+    ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
+    arrUserValid+=("${curUsername}")
+  else
+    ${cmdEcho} -e "${curUsername} is not an active account and should be deleted from ${fileSudoers}."  | ${cmdTee} "${fileLog}"
+    arrUserInvalid+=("${curUsername}")
+  fi
 
-      if (field_content ~ myvar) {fi
-        #print $2
-        notfound = 0
-        exit # Exit immediately after finding the first match
-      }
-    }
-  }
-  END {
-    if (notfound == 1) {
-      exit 1
-    } else {
-      exit 0
-    }
-  }' "${fileActiveUsers}"
+
+#   gawk -v IGNORECASE=1 -v myvar="${curUsername}" -v FPAT='[^,]*|\"([^\"]|\"\")*\"' '
+#   BEGIN {
+#     notfound = 1
+#   }
+#   {
+#     for (i = 1; i <= NF; i++) {
+#       field_content = $i
+#       if (substr(field_content, 1, 1) == "\"") {
+#         field_content = substr(field_content, 2, length(field_content) - 2)
+#       }
+#
+#       if (field_content ~ myvar) {fi
+#         #print $2
+#         notfound = 0
+#         exit # Exit immediately after finding the first match
+#       }
+#     }
+#   }
+#   END {
+#     if (notfound == 1) {
+#       exit 1
+#     } else {
+#       exit 0
+#     }
+#   }' "${fileActiveUsers}"
 #   ${cmdEcho} "$Line ${LINENO} : Finished Checking ${fileActiveUsers} for ${curUsername}"
 }
+
 
 fnDeleteRules() {
 
@@ -94,7 +153,7 @@ fnDeleteRules() {
         sed -E ${optCommit} "/${patRule}/Id" "${fileSudoers}"
       fi
       if [ ${optCleanAliases} -eq 1 ]
-      then/usr/lib/systemd/user/localsearch-3.service
+      then
         strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in aliases"
         fnSpinner
         sed -E ${optCommit} "/${patAlias}/{ s/(${curUsername}[[:space:]]+?,)//Ig}" "${fileSudoers}"
@@ -102,18 +161,19 @@ fnDeleteRules() {
       ((intCounter++))
     fi
   done  < <( if [ ${optCleanComments} -eq 1 ]
-  then \
-    patRule='^#[^#][[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ; \
+  then
+    patRule='^#[^#][[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ;
     PatAlias="^([#][[:space:]]?)[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?="
-  else patRule='^[[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ; \
+  else patRule='^[[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ;
     patAlias='^[^#][[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?=' ; \
-  fi ; \
+  fi ;
   awk -v pattern="(${patRule}|${patAlias})"  '$0 ~ pattern {print $1}' "${fileSudoers}" "${fileSudoers}"  | sort -Vu)
     #patAlias='^[^#][[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?=' ;
 #  awk -v pattern="(${patRule}|${patAlias})"  '$0 ~ pattern {print $1}' "${fileSudoers}" "${fileSudoers}" | sed -E '/^#[#[:punct:]]/d' | sort -Vu)
 
   # regex NOT substring: ^((?!error).)*$
 #(awk -v pattern="^#([[:space:]]?|Defaults|[[:alpha:]]+_Alias|%|$)"  '$0 ~ pattern {print $1}' "${fileSudoers}" | sort -Vu)
+
 }
 
 function fnRemoveRules() {
@@ -248,9 +308,11 @@ do
                       exit 0;
                       ;;
     -a | --active )   shift;
-                      fileActiveUsers="$1";#########################
+                      fileActiveUsers="$1";
                       ;;
-    -a | --cleanaliases ) optCleanAliases="1";
+    -A | --abbreviate ) cmdAbbreviate="tail -n 20"
+                      ;;
+    -C | --cleanaliases ) optCleanAliases="1";
                       ;;
     -c | --cleancomments ) optCleanComments="1";
                       ;;
@@ -261,16 +323,18 @@ do
     -f | --filespec ) shift;
                       strFilespec="$1"
                       ;;
+    -L | --log ) shift;
+                      fileLog="${1}"
+                      cmdLog="echo"
+                      cmdTee="tee -a"
+                      optLog="1"
+                      ;;
     -m | --move )     shift;
                       dirMoveTarget="$1"
                       ;;
     -q | --quoted )   optCsvQuoted="1"
                       ;;
-    -R | --report | --log ) shift;
-                      fileLog="${1}"
-                      cmdLog="echo"
-                      cmdTee="tee"
-                      optLog="1"
+    -r | --report ) optReport="1"
                       ;;
     -s | --sudoersfile ) shift;
                       fileSudoers="$1";
@@ -292,6 +356,38 @@ do
   esac ;
   shift ;
 done;
+
+if [ ${optReport} -eq 1 ];
+then
+  if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
+  then
+    echo -e "You asked me to report on active and invalid accounts:\n" | ${cmdTee} "${fileLog}"
+    if [[ ! "${cmdAbbreviate}" == ":" ]];
+    then
+      echo -e "\tNote: Output is abbreviated by tail -n 20";
+    fi;
+    echo -e "\tNote: Applying custom word filter: ${patCustomFilter}\n"
+    fnGetUserList
+    unset arrUserValid arrUserInvalid
+    for curUsername in ${arrAccountList};
+    do
+      fnIsUserActive;
+    done;
+    echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:" | ${cmdTee} "${fileLog}"
+    for item in ${arrUserInvalid[@]}
+    do
+      echo "${item}"
+    done | ${cmdAbbreviate};
+    echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:" | ${cmdTee} "${fileLog}"
+    for item in ${arrUserValid[@]}
+    do
+      echo "${item}"
+    done | ${cmdAbbreviate};
+    exit 0;
+  fi;
+fi;
+
+
 
 if [ ${optDelete} == 1 ];
 then
