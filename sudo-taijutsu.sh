@@ -33,13 +33,13 @@ chrTab='\t'
 # in lines of code (for which bash isn't terribly efficient)
 
 patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|word6|word7|etc'
-
+patCustomFilter2='pattern1|pattern2'
 #
 #########################
 # Clear variables so we don't inherit settings from sourced runs:
 
 unset optVerbose optCommit
-eval {optDelete,optVerbose,intCounter}=0
+eval {optDelete,optVerbose,intCounter,optReport}=0
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
 # Initialize these variables for unary expressions:
 eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0
@@ -52,8 +52,8 @@ set +x
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-chop started."
-cmdEcho=":"
-cmdTee=":"
+cmdEcho="true"
+cmdTee="true"
 cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 
@@ -98,7 +98,7 @@ fnIsUserActive() {
 
   strStep="Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
   ${cmdEcho} "${strStep}"
-  fnSpinner
+  #fnSpinner
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
     ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
@@ -149,7 +149,8 @@ fnDeleteRules() {
       then
         strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in sudoer rules"
         fnSpinner
-        ${cmdEcho} "${LINENO}){ : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
+        strStep="${LINENO}){ : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
+        ${cmdEcho} "${strStep}"
         sed -E ${optCommit} "/${patRule}/Id" "${fileSudoers}"
       fi
       if [ ${optCleanAliases} -eq 1 ]
@@ -357,7 +358,7 @@ do
   shift ;
 done;
 
-if [ ${optReport} -eq 1 ];
+if [ "${optReport}" -eq 1 ];
 then
   if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
   then
