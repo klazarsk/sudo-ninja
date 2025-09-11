@@ -32,7 +32,7 @@ chrTab='\t'
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
-patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|word6|word7|etc'
+patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|pattern7|pattern8|etc'
 patCustomFilter2='pattern1|pattern2'
 #
 #########################
@@ -56,7 +56,8 @@ cmdEcho="true"
 cmdTee="true"
 cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
-
+intScreenWidth=$(( $(tput cols) - 18 ))
+echo "intScreenWidth=${intScreenWidth}"
 
 function fnSpinner() {
   if [ -z $gfxSpin ]
@@ -65,7 +66,7 @@ function fnSpinner() {
   fi
 
   printf "\r\033[2K"
-  printf " %-90.90b %-2.2s \r" "${strStep}"    "${gfxSpin} "
+  printf " %-${intScreenWidth}.${intScreenWidth}b %-12.12s \r" "${strStep}"    "${gfxSpin} "
   case "${gfxSpin}" in
     "/" ) gfxSpin="-"
       ;;
@@ -96,15 +97,15 @@ arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\
 fnIsUserActive() {
 
 
-  strStep="Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
+  strStep="Line ${LINENO} : ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
   ${cmdEcho} "${strStep}"
   fnSpinner
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
-    ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
+    #${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
     arrUserValid+=("${curUsername}")
   else
-    ${cmdEcho} -e "${curUsername} is not an active account and should be deleted from ${fileSudoers}."  | ${cmdTee} "${fileLog}"
+    #${cmdEcho} -e "${curUsername} is not an active account and should be deleted from ${fileSudoers}."  | ${cmdTee} "${fileLog}"
     arrUserInvalid+=("${curUsername}")
   fi
 
