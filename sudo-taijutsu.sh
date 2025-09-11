@@ -98,7 +98,7 @@ fnIsUserActive() {
 
   strStep="Line ${LINENO}\t: ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
   ${cmdEcho} "${strStep}"
-  #fnSpinner
+  fnSpinner
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
     ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
@@ -363,7 +363,7 @@ then
   if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
   then
     echo -e "You asked me to report on active and invalid accounts:\n" | ${cmdTee} "${fileLog}"
-    if [[ ! "${cmdAbbreviate}" == ":" ]];
+    if [[ ! "${cmdAbbreviate}" == "cat" ]];
     then
       echo -e "\tNote: Output is abbreviated by tail -n 20";
     fi;
