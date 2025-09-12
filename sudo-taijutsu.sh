@@ -33,14 +33,14 @@ chrTab='\t'
 # in lines of code (for which bash isn't terribly efficient)
 
 patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|pattern7|pattern8|etc'
-patCustomFilter2='pattern1|pattern2'
+patCustomFilter2='pattern1|pattern2|etc'
 #
 #########################
 # Clear variables so we don't inherit settings from sourced runs:
 
 unset optVerbose optCommit
-eval {optDelete,optVerbose,intCounter,optReport}=0
-unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
+eval {optDelete,optVerbose,intCounter,optReport,optQuiet}=0
+unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
 eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0
 
@@ -57,7 +57,6 @@ cmdTee="true"
 cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 intScreenWidth=$(( $(tput cols) - 18 ))
-echo "intScreenWidth=${intScreenWidth}"
 
 function fnSpinner() {
   if [ -z $gfxSpin ]
@@ -89,10 +88,29 @@ function fnSpinner() {
 
 function fnGetUserList() {
 
-arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sort -Vu )
+arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "${dtStart8601}: sudo-katana started."]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sort -Vu )
 #; for i in ${arrAccountList} ; do echo "Account: ${i}" ; done
 
 }
+
+if [ -z ${fileLog} ];
+then
+
+fi;
 
 fnIsUserActive() {
 
@@ -142,7 +160,7 @@ fnIsUserActive() {
 fnDeleteRules() {
 
 #   if [ ${optCleanComments} -eq 1 ]
-  while read curUsername;
+  for curUsername in ${arrUserInvalid[@]};
   do
     if ! fnIsUserActive
     then
@@ -151,7 +169,7 @@ fnDeleteRules() {
         strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in sudoer rules"
         fnSpinner
         strStep="${LINENO}){ : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
-        ${cmdEcho} "${strStep}"
+        ${echo} "${strStep}" | ${cmdTee} "${fileLog}"
         sed -E ${optCommit} "/${patRule}/Id" "${fileSudoers}"
       fi
       if [ ${optCleanAliases} -eq 1 ]
@@ -336,6 +354,8 @@ do
                       ;;
     -q | --quoted )   optCsvQuoted="1"
                       ;;
+    -Q | --quiet ) optQuiet="1"
+                      ;;
     -r | --report ) optReport="1"
                       ;;
     -s | --sudoersfile ) shift;
@@ -359,6 +379,26 @@ do
   shift ;
 done;
 
+##############################
+#
+# Check options for sanity:
+
+if [ ${optQuiet} -eq 1 ] && [ "${optVerbose}" == "-v" ]
+then
+  echo -e "\n\n${otagRed}Error:${ctag} ${otagBold}--quiet${ctag} and ${otagBold}--verbose${ctag} options are mutually exclusive. Your command line:"
+  echo -e "\n\t${otagRed}${cmdLine}${ctag}\n"
+  exit 1
+fi
+
+#
+##############################
+
+if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
+then
+  echo -e "\tNote: Applying custom word filter: ${patCustomFilter}\n"
+  fnGetUserList
+fi
+
 if [ "${optReport}" -eq 1 ];
 then
   if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
@@ -368,24 +408,42 @@ then
     then
       echo -e "\tNote: Output is abbreviated by tail -n 20";
     fi;
-    echo -e "\tNote: Applying custom word filter: ${patCustomFilter}\n"
-    fnGetUserList
-    unset arrUserValid arrUserInvalid
     for curUsername in ${arrAccountList};
     do
       fnIsUserActive;
     done;
-    echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:" | ${cmdTee} "${fileLog}"
-    for item in ${arrUserInvalid[@]}
-    do
-      echo "${item}"
-    done | ${cmdAbbreviate};
-    echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:" | ${cmdTee} "${fileLog}"
-    for item in ${arrUserValid[@]}
-    do
-      echo "${item}"
-    done | ${cmdAbbreviate};
-    exit 0;
+
+      if [ ${optQuiet} -ne 1 ];
+      then
+        echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:"
+        for item in ${arrUserInvalid[@]}
+        do
+          echo "${item}"
+        done | ${cmdAbbreviate};
+        echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:"
+        for item in ${arrUserValid[@]}
+        do
+          echo "${item}";
+        done | ${cmdAbbreviate};
+      else
+        echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts."
+        echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts."
+        echo "(user lists omitted via --quiet option)" ;
+      fi
+
+    if [ -f "${fileLog}" ];
+    then
+      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:" >> "${fileLog}"
+      for item in ${arrUserInvalid[@]}
+      do
+        echo "${item}"
+      done >> "${fileLog}";
+      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:" >> "${fileLog}"
+      for item in ${arrUserValid[@]}
+      do
+        echo "${item}"
+      done >> "${fileLog}";
+    fi
   fi;
 fi;
 
@@ -394,7 +452,7 @@ fi;
 if [ ${optDelete} == 1 ];
 then
   ${cmdEcho} -en "You asked us to delete inactive users "
-  if [ ! -z  ${fileSudoers} ]
+  if [ -n "${arrUserInvalid}" ] && [ -d "${dirTarget}" ] && [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -gt 1 ]
   then
     ${cmdEcho} -en "from ${fileSudoers} }"
 

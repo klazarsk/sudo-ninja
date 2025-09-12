@@ -272,7 +272,7 @@ function fnRecombine() {
   echo;
   if [ -f "${optOutputFile}" ];
   then
-    if [ "${optOverwrite}" == 1 ];
+    if [ "${optOverwrite}" -eq 1 ];
     then
       ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : \${optOutputFile} _ ${optOutputFile}";
       > "${optOutputFile}";
@@ -287,13 +287,14 @@ function fnRecombine() {
   fi;
 
 
-  if [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ne 0 ]
+  if [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -gt 1 ]
   then
+    ${cmdEcho} "Checking for ${dirTarget}/${optFilePrefix}*.tmp-merged files..."
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | sort -V);
     do
         [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
-        ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}";
+        ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : merging ${curFile} to ${optOutputFile}";
         cat "${curFile}" >> "${optOutputFile}";
         echo >> "${optOutputFile}";
     done
@@ -388,7 +389,7 @@ do
     -p | --prefix ) shift;
                     optFilePrefix="${1}";
                     ;;
-    -r | --recombine ) optRecombine=1;
+    -r | --recombine ) optRecombine="1";
                     ;;
     -R | --report | --log ) shift;
                     fileLog="${1}"
@@ -454,7 +455,7 @@ then
     if [ "${optRecombine}" -eq 1 ] && [ -n "${optFilePrefix}" ] && [ -d "${dirTarget}" ] && [ "$(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l)" -ge 1 ] ;
     then
       echo "Line ${LINENO} : No --input argument present, but --recombine, --targetdir, and --prefix specified. Attempting to recombine preexisting split files."
-      ${cmdEcho} "Line ${LINENO} :\${optRecombine}=${optRecombine} : \${optFilePrefix}=${optFilePrefix} : \${dirTarget}=${dirTarget} : $(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l) files found"
+      ${cmdEcho} "Line ${LINENO} :optRecombine==${optRecombine} : optFilePrefix==${optFilePrefix} : \${dirTarget}=${dirTarget} : $(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l) files found"
 
     else
       echo -e "\nLine ${LINENO} :Please supply an ${otagRed}--input [filename]${ctag}"
@@ -519,13 +520,13 @@ then
 fi;
 
 echo
-${cmdEcho} -e "${LINENO} : Recombine routine is next\n";
+${cmdEcho} -e "${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
 
-if [ "${optRecombine}" == 1 ];
+if [ "${optRecombine}" -eq 1 ];
 then
   strStep="Recombining ${fileInput} to ${optOutputFile}..."
   ${cmdWordVomit} -n "Line ${LINENO} : Calling fnRecombine : ";
-  echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
+  ${cmdEcho} -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
   fnRecombine;
   ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
   echo
