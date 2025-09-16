@@ -42,7 +42,7 @@ unset optVerbose optCommit
 eval {optDelete,optVerbose,intCounter,optReport,optQuiet}=0
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
-eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog,}=0
+eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0
 
 #########################
 #Set some sane defaults
@@ -146,44 +146,56 @@ fnIsUserActive() {
 
 fnDeleteRules() {
 
-#   if [ ${optCleanComments} -eq 1 ]
-  for curUsername in ${arrUserInvalid[@]};
-  do
-    if ! fnIsUserActive
-    then
-      if [ ${optDelete} == 1 ];
-      then
-        strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in sudoer rules"
-        fnSpinner
-        strStep="${LINENO}){ : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
-        ${echo} "${strStep}" | ${cmdTee} "${fileLog}"
-        sed -E ${optCommit} "/${patRule}/Id" "${fileSudoers}"
-      fi
-      if [ ${optCleanAliases} -eq 1 ]
-      then
-        strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in aliases"
-        fnSpinner
-        sed -E ${optCommit} "/${patAlias}/{ s/(${curUsername}[[:space:]]+?,)//Ig}" "${fileSudoers}"
-      fi
-      ((intCounter++))
-    fi
-  done  < <( if [ ${optCleanComments} -eq 1 ]
-  then
-    patRule='^#[^#][[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ;
-    PatAlias="^([#][[:space:]]?)[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?="
-  else patRule='^[[:space:]]?^(|Defaults|[[:alpha:]]+_Alias|%|$)[[:space:]]?${curUsername}.*$' ;
-    patAlias='^[^#][[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?=' ; \
-  fi ;
-  awk -v pattern="(${patRule}|${patAlias})"  '$0 ~ pattern {print $1}' "${fileSudoers}" "${fileSudoers}"  | sort -Vu)
-    #patAlias='^[^#][[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+?=' ;
-#  awk -v pattern="(${patRule}|${patAlias})"  '$0 ~ pattern {print $1}' "${fileSudoers}" "${fileSudoers}" | sed -E '/^#[#[:punct:]]/d' | sort -Vu)
+  unset IFS POSIXLY_CORRECT
+  ${cmdEcho} "Line ${LINENO} : Entered ${FUNCNAME} to delete ${#arrUserInvalid[@]} users."
 
-  # regex NOT substring: ^((?!error).)*$
-#(awk -v pattern="^#([[:space:]]?|Defaults|[[:alpha:]]+_Alias|%|$)"  '$0 ~ pattern {print $1}' "${fileSudoers}" | sort -Vu)
+for curUsername in "${arrUserInvalid[@]}";
+do
+  strStep="Line: ${LINENO} : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
+  fnSpinner
+
+  ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
+  sed -i -E "/[^=]+?${curUsername}[^=]+=/Id" ${fileSudoers};
+
+  ((intCounter++))
+done
+
+
+#     strStep="Line${chrTab}${LINENO} : ${FUNCNAME} : Scanning ${fileSudoers} for ${curUsername} in sudoer rules"
+#   echo "Now cleaning comments"
+#   if [ ${optCleanComments} -eq 1 ];
+#   then
+#     sed -i -E "/^[[:space:]]?#/ { /([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})/!d }" "${fileSudoers}"
+#   fi
 
 }
 
 function fnRemoveRules() {
+
+  if [ ${optCleanComments} -eq 1 ]
+  then
+    patRule='^[#]?(Defaults|[[:alpha:]]+_Alias|%|$)'
+  else
+    patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
+  fi
+
+  for curUser in ${arrUserInvalid};
+  do
+    while read curFile;
+    do
+
+      if $(grep -iE "[ ,]${curUser}[ ,]" "${curFile}");
+      then
+        echo "${curUser} would be deleted from ${curFile}";
+      fi;
+
+    done < <(find ${dirTarget} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
+  done
+
+}
+
+
+function fnOldRemoveRules() {
 
   if [ ${optCleanComments} -eq 1 ]
   then
@@ -300,7 +312,7 @@ echo -e "
 
 if [[ -z "$@" ]];
 then
-  echo -e "${otagRed}You supplied no command arguments; unable to proceed.${ctag}";
+  echo -e "${otagRed}You supplied no command ${curUsername}[ ]?arguments; unable to proceed.${ctag}";
   echo "Your command line:";
   echo -e "\t$cmdLine\n";
   fnHelp;
@@ -384,7 +396,14 @@ if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
 then
   echo -e "\tNote: Applying custom word filter: ${patCustomFilter}\n"
   fnGetUserList
+  for curUsername in ${arrAccountList};
+  do
+  fnIsUserActive;
+  done;
 fi
+
+${cmdEcho} "We got the inactive user list: ${arrUserInvalid[@]}"
+# echo "${arrUserInvalid[@]}" | tr ' ' '\n' > "arrUserInvalid.txt.$(date +"%Y-%m-%d_%H%M%S")"
 
 if [ "${optReport}" -eq 1 ];
 then
@@ -395,10 +414,7 @@ then
     then
       echo -e "\tNote: Output is abbreviated by tail -n 20";
     fi;
-    for curUsername in ${arrAccountList};
-    do
-      fnIsUserActive;
-    done;
+
 
       if [ ${optQuiet} -ne 1 ];
       then
@@ -435,36 +451,47 @@ then
 fi;
 
 
-
-if [ ${optDelete} == 1 ];
+${cmdEcho} "Line ${LINENO} : About to check value of \${optDelete}(=1)";
+if [ ${optDelete} -eq 1 ];
 then
-  ${cmdEcho} -en "You asked us to delete inactive users "
-  if [ -n "${arrUserInvalid}" ] && [ -d "${dirTarget}" ] && [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -gt 1 ]
+  ${cmdEcho} -en "Line ${LINENO} : You asked us to delete inactive users ";
+  if [ -f "${fileSudoers}" ];
   then
-    ${cmdEcho} -en "from ${fileSudoers} }"
-
-    ${cmdEcho} "You requested that we compare ${dirTarget} rules against ${fileSudoers}."
-    if [ ! -z ${fileActiveUsers} ]
-    then
-      fnDeleteRules
-    fi
+    dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
+    echo "Backing up ${fileSudoers} to ${fileSudoers}.${dtBackupSuffix}";
+    cp "${fileSudoers}" "${fileSudoers}.${dtBackupSuffix}";
+    fnDeleteRules
+    echo -e "\n${intCounter} deleted/inactive users actioned.";
   fi
 fi
 
-if [ ! -z ${dirMoveTarget} ] ;
-then
-  ${cmdEcho} "You requested that we move inactive sudoer rules to ${dirTarget}/${dirMoveTarget}."
-  if [ ! -z  ${fileSudoers} ]"%*s" "%*s"
-  then
-    ${cmdEcho} "You requested that we compare ${dirTarget} rules against ${fileSudoers}."
-    if [ ! -z ${fileActiveUsers} ]
-    then
-      ${cmdEcho} "You requested that we compare the users in ${dirTarget}/${dirMoveTarget} and ${fileSudoers} to verify they are in fileActiveUsers."
-      if [ ! -z ${strFilespec} ]
-      then
-        fnRemoveRules
-      fi
-    fi
-  fi
-fi
-echo -e "\n${intCounter} deleted/inactive users actioned."
+# #   if [ -n "${arrUserInvalid}" ] && [ -d "${dirTarget}" ] && [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ge 1 ]
+# #   then
+# #     ${cmdEcho} "Line ${LINENO} : 1 or more tmp-merged or tmp-rules files found"
+# # #     ${cmdEcho} -en "from ${fileSudoers} }"
+# #
+# #     ${cmdEcho} "You requested that we compare ${dirTarget} rules against ${fileSudoers}."
+# #     if [ "${#arrUserInvalid[@]}" -gt 0 ]
+# #     then
+# #       echo "User deletion triggered"
+# #       fnDeleteRules
+# #     fi
+# #   fi
+#
+#
+# # if [ ! -z ${dirMoveTarget} ] ;
+# # then
+# #   ${cmdEcho} "Line ${LINENO} : You requested that we move inactive sudoer rules to ${dirTarget}/${dirMoveTarget}."
+# #   if [ ! -z  ${fileSudoers} ]"%*s" "%*s"
+# #   then
+# #     ${cmdEcho} "Line ${LINENO} : You requested that we compare ${dirTarget} rules against ${fileSudoers}."
+# #     if [ ! -z ${fileActiveUsers} ]
+# #     then
+# #       ${cmdEcho} "Line ${LINENO} : You requested that we compare the users in ${dirTarget}/${dirMoveTarget} and ${fileSudoers} to verify they are in fileActiveUsers."
+# #       if [ ! -z ${strFilespec} ]
+# #       then
+# #         fnRemoveRules
+# #       fi
+# #     fi
+# #   fi
+# # fi
