@@ -48,7 +48,7 @@ eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrit
 #Set some sane defaults
 optSilent="-s"
 cmdLog="true"
-# set +x
+set +x
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-chop started."
@@ -102,34 +102,13 @@ fnDeleteRules() {
   do
     strStep="Line: ${LINENO} : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner
-    if [[ "${curUsername,,}" == "foo" ]] ;
-    then
-      echo -e "\n\n\n\n\t\t\t Current user is foo!!!\n\n\n";
-      echo "is their aslias still there?"
-      grep -E "Alias.*${curUsername}" ${fileSudoers}
-      intBefore=$(wc -l "${fileSudoers}" | awk '{print $1}')
-      sleep 10;
-    fi
-
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
-#     sed -i -E "/[^=]+?${curUsername}[^=]+=/Id" ${fileSudoers};
-#     sed -i -E "/[^=]+\b${curUsername}\b[^=]+=/d" ${fileSudoers};
     sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${fileSudoers}";
-
-    if [[ "${curUsername}" == "foo" ]] ;
-    then
-      echo -e "\n\n\n\n\t\t\t Current user foo was just deleted!!! \n\n\n";
-      intAfter=$(wc -l "${fileSudoers}" | awk '{print $1}')
-      echo "For step ${curUsername}, $(echo ${intBefore} - ${intAfter} | bc) lines were deleted."
-      sleep 60;
-      read -n 1 -s -r -p "Press any key to continue"
-    fi
 
     ((intCounter++))
   done
 
 }
-
 
 
 fnIsUserActive() {
@@ -140,10 +119,10 @@ fnIsUserActive() {
   fnSpinner
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
-    #${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}." | ${cmdTee} "${fileLog}"
+#     ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}."
     arrUserValid+=("${curUsername}")
   else
-    #${cmdEcho} -e "${curUsername} is not an active account and should be deleted from ${fileSudoers}."  | ${cmdTee} "${fileLog}"
+# #     ${cmdEcho} -e "${curUsername} is not an active account and should be deleted from ${fileSudoers}."
     arrUserInvalid+=("${curUsername}")
   fi
 
@@ -307,7 +286,8 @@ do
                       ;;
     -a | --active )   shift;
                       fileActiveUsers="$1";
-                      ;;
+                      ;;# echo "${arrUserInvalid[@]}" | tr ' ' '\n' > "arrUserInvalid.txt.$(date +"%Y-%m-%d_%H%M%S")"
+
     -A | --abbreviate ) cmdAbbreviate="tail -n 20"
                       ;;
     -C | --cleanaliases ) optCleanAliases="1";
@@ -382,7 +362,6 @@ then
 fi
 
 ${cmdEcho} "We got the inactive user list: ${arrUserInvalid[@]}"
-# echo "${arrUserInvalid[@]}" | tr ' ' '\n' > "arrUserInvalid.txt.$(date +"%Y-%m-%d_%H%M%S")"
 
 if [ "${optReport}" -eq 1 ];
 then
