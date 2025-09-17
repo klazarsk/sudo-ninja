@@ -32,7 +32,7 @@ chrTab='\t'
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
-patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|pattern7|pattern8|etc'
+patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
 patCustomFilter2='pattern1|pattern2|etc'
 #
 #########################
@@ -57,6 +57,17 @@ cmdTee="true"
 cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 intScreenWidth=$(( $(tput cols) - 18 ))
+
+
+##########
+#
+# Notes, snippets
+#
+#
+#
+#
+#
+##########
 
 function fnSpinner() {
   if [ -z $gfxSpin ]
@@ -88,7 +99,7 @@ function fnSpinner() {
 
 function fnGetUserList() {
 
-arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sort -Vu )
+arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
 
 }
 
@@ -105,11 +116,22 @@ fnDeleteRules() {
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
     sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${fileSudoers}";
 
+    sed -i -E "s/(=.*)\b${curUsername}\b(\s*)?(.*\$)?/\1\3/g" "${fileSudoers}"
+
     ((intCounter++))
   done
 
+  # Now let's just do some cleanup, cleaning up excessive white space, orphaned commas, Aliases that have been left empty, and blank lines:
+  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /=[^[:alnum:]]*$/d ; /^$/d' "${fileSudoers}"
+
 }
 
+fnDeleteComments() {
+
+  $ Strip all comments which do not include a date
+  sed -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|(Jan|Feb|Mar|April|May|Jun[e]?|Jul[y]?|Aug|Sep[t]?|Oct|Nov|Dec)([0-9]{1,2} [0-9]{2,4})/!d}' ${fileSudoers}
+
+}
 
 fnIsUserActive() {
 
@@ -416,12 +438,29 @@ then
   if [ -f "${fileSudoers}" ];
   then
     dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
-    echo "Backing up ${fileSudoers} to ${fileSudoers}.${dtBackupSuffix}";
+    echo -e "\033[0K\rBacked up ${fileSudoers} to ${fileSudoers}.${dtBackupSuffix}\n";
     cp "${fileSudoers}" "${fileSudoers}.${dtBackupSuffix}";
     fnDeleteRules
     echo -e "\n${intCounter} deleted/inactive users actioned.";
   fi
 fi
+
+if [ ${optCleanComments} -eq 1 ];
+then
+  echo "Deleting comments..."
+  fnDeleteComments;
+fi;
+
+echo -e "\nIt is finished."
+
+dtFinish="$(date +"%s")";
+dtDuration=$(( ${dtFinish} - ${dtStart} ))
+dtDurationMinutes=$(( ${dtDuration} / 60 ))
+dtDurationSeconds=$(( ${dtDuration} % 60 ))
+dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
+echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s."
+
+exit 0
 
 # #   if [ -n "${arrUserInvalid}" ] && [ -d "${dirTarget}" ] && [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ge 1 ]
 # #   then
