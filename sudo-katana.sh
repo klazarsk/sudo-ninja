@@ -196,9 +196,6 @@ function fnSplitSudoers() {
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
 #     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
-                   cmdDbgRead=read;
-                   cmdDbgSleep=sleep;
-                   cmdDbgEcho=echo;
     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
 
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
@@ -343,9 +340,7 @@ function fnMergeComments() {
 
   ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
 
-  for curFile in $(find "${dirTarget}" -ma                   cmdDbgRead=read;
-                   cmdDbgSleep=sleep;
-                   cmdDbgEcho=echo;xdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  for curFile in $(find "${dirTarget}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
@@ -554,11 +549,11 @@ fi;
 
 
 
-echo
-${cmdEcho} -e "${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
+${cmdEcho} -e "\n\n${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
 
 if [ "${optRecombine}" -eq 1 ];
 then
+  echo
   strStep="Recombining ${fileInput} to ${optOutputFile}..."
   ${cmdWordVomit} -n "Line ${LINENO} : Calling fnRecombine : ";
   ${cmdEcho} -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
