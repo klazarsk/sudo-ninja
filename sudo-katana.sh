@@ -39,9 +39,15 @@ otagItal="\e[3m"
 
 unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
 # Initialize these variables for unary expressions:
-eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog}=0
+eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog,optDebug}=0
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
 
+#########################
+#
+# Snippets we will use for upcoming features:
+#
+# sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "AX5120G${fileSudoers}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ;' | less
+#
 #########################
 #
 # Set some sane defaults
@@ -60,6 +66,9 @@ dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
 echo "${dtStart8601}: sudo-katana started."
 cmdLine="${0} ${@}"
+cmdDbgRead=true;
+cmdDbgSleep=true;
+cmdDbgEcho=true;
 #
 ##############################
 # Ensure utilities we rely upon are present
@@ -87,8 +96,11 @@ echo -e "
 
     ${otagBold} -d | --workingDirectory${ctag}
         working directory (not implemented yet)
+    ${otagBold} -D | --debug
+        Debug mode which turns on sleeps, pause breaks waiting for keypress
+        to continue, allowing for review and analysis of intermediate files
 
-    ${otagBold}  -e | --expiration${ctag}
+    ${otagBold}  -e | --expire${ctag}
         Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
         non-8601 date format driven by client's preexisting data
         Will implement 8601-friendly method later
@@ -96,6 +108,7 @@ echo -e "
     ${otagBold} -m | --monitor${ctag}
         Monitor tail of ls -lhtr of target directory.
         WARNING! This is VERY slow! Use ONLY for debugging!
+        (not fully implemented/not tested)
 
     ${otagBold} -M | --nomerge${ctag}
         Don't merge the comments back in - this is good for
@@ -103,6 +116,7 @@ echo -e "
 
     ${otagBold} -N | --nuke${ctag}
         Nuke from orbit to be sure
+
 
     ${otagBold} -n | --nocomment${ctag}
         Strip out all comments
@@ -134,7 +148,7 @@ echo -e "
         extra words and stuff (Word vomit!)
 
     ${otagBold} -vvv | --plaid${ctag}
-        tl;dr
+        tl;dr (read this output you'll get a headache)
 "
 }
 
@@ -181,7 +195,12 @@ function fnSplitSudoers() {
   then
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
-    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+                   cmdDbgRead=read;
+                   cmdDbgSleep=sleep;
+                   cmdDbgEcho=echo;
+    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
     echo;
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
@@ -299,6 +318,7 @@ function fnRecombine() {
         echo >> "${optOutputFile}";
     done
 
+
   else
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : ";
     for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
@@ -323,7 +343,9 @@ function fnMergeComments() {
 
   ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
 
-  for curFile in $(find "${dirTarget}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  for curFile in $(find "${dirTarget}" -ma                   cmdDbgRead=read;
+                   cmdDbgSleep=sleep;
+                   cmdDbgEcho=echo;xdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
@@ -370,6 +392,11 @@ do
     -d | --workingDirectory ) shift;
                     dirWorking="${1}";
                     ;;
+    -D | --debug ) optDebug=1;
+                    cmdDbgRead=read;
+                    cmdDbgSleep=sleep;
+                    cmdDbgEcho=echo;
+                   ;;
     -e | --expire) shift;
                     optExpire="US";
                     ;;
@@ -498,10 +525,16 @@ then
   strStep="Flattening ${fileInput} ";
   echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
 
+${cmdDbgEcho} -e "\n\nAbout to start the flatten step!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+
   strStep="Flattening rules ${dirTarget}/${optFilePrefix}*.tmp-rule";
   fnFlattenRules;
   ${cmdEcho} -e "\n${LINENO} : Finished flattening rules...";
 fi;
+
+${cmdDbgEcho} -e "\n\nDone with the flatten step!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 echo
 ${cmdEcho} -e "${LINENO} : Merging is next\n"
@@ -518,6 +551,8 @@ then
   fi;
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
 fi;
+
+
 
 echo
 ${cmdEcho} -e "${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
@@ -539,6 +574,6 @@ dtDuration=$(( ${dtFinish} - ${dtStart} ))
 dtDurationMinutes=$(( ${dtDuration} / 60 ))
 dtDurationSeconds=$(( ${dtDuration} % 60 ))
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}:${dtDurationSeconds}."
+echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s."
 
 exit 0
