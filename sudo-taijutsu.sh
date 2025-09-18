@@ -121,9 +121,13 @@ fnDeleteRules() {
     ((intCounter++))
   done
 
-  # Now let's just do some cleanup, cleaning up excessive white space, orphaned commas, Aliases that have been left empty, and blank lines:
-  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /=[^[:alnum:]]*$/d ; /^$/d' "${fileSudoers}"
-
+  # Now let's just do some cleanup, cleaning up excessive white space, orphaned commasrecombined-east-third, , and blank lines:
+  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /^$/d' "${fileSudoers}"
+  sed -i -E 's/=\s,//g' "${fileSudoers}"
+  # now let's delete aliases that have been orphaned, but report them first
+  echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers}"
+  sed -En '/=[^[:alnum:]]*$/ { /^#/!p } ;' "${fileSudoers}"
+  sed -i -E '/=[^[:alnum:]]*$/d ;' "${fileSudoers}"
 }
 
 fnDeleteComments() {
