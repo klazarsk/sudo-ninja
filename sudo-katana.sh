@@ -46,7 +46,7 @@ eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optF
 #
 # Snippets we will use for upcoming features:
 #
-# sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "AX5120G${fileSudoers}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ;' | less
+# sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${fileSudoers}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ;' | less
 #
 #########################
 #
@@ -196,7 +196,8 @@ function fnSplitSudoers() {
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
 #     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
-    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
 
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
     echo;
@@ -213,10 +214,11 @@ function fnSplitSudoers() {
         fi
       fi
       sed -En '/^(\s+)?#/!p' "${curFile}" > "${curFile}-rule";
-#      mv ${curFile} ${curFile}.bak
+
       rm ${optVerbose} "${curFile}";
       ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]}";
       sed -En '/^#.*/p' "${curFile}-rule" > "${curFile}" ; sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;' "${curFile}" | tr -d '\n' >> "${curFile}-rule" ; echo >> "${curFile}-rule";
+
       rm ${optVerbose} "${curFile}";
       ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     done;
@@ -236,7 +238,7 @@ function fnFlattenRules() {
   do
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
     ${cmdWordVomit} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
-    sed -E '/^#.*/p' "${curFile}" | sed -E '/^#.*/d; s/^(.*)\s+\\.*$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
+    sed -E '/^#.*/p' "${curFile}" | sed -E '/^#.*/d; s/^([^\]*)\\[\s]+?$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
     echo >> "${curFile}-rule";
     mv ${optVerbose} "${curFile}-rule" "${curFile}";
   done;
@@ -246,7 +248,7 @@ function fnFlattenRules() {
 function fnSplitExpirations () {
 
   LINES=5;
-  intRenumber=1;
+  intRenumber=1;Value
   for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
   do
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
@@ -278,6 +280,49 @@ function fnSplitExpirations () {
 
 }
 
+function fnRmExpiredAccounts() {
+
+  declare arrExpiredRules;
+  dtToday="$(date +"%Y-%m-%d")"
+  set intCounter=0
+
+  for curFile in $(find "${dirTarget}" -name "*.tmp-merged" | sort -V);
+  do
+    strStep="Scanning ${curFile} for expired rules... "
+    fnSpinner
+    if $(grep -E "#.*EXP" "${curFile}" >/dev/null);
+    then
+      curExpDate=$(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g');
+
+  #     echo "${curExpDate}"
+
+      if [[ "${curExpDate}" < "${dtToday}" ]];
+      then
+        ((intCounter+=1))
+  #       echo "${curExpDate} < ${dtToday}"
+  #       echo -e "\nadding ${curFile} to ${arrExpiredRules}\n"
+        arrExpiredRules+=("${curFile}");
+
+      fi
+    fi;
+  done
+
+  strStep="The following ${intCounter} rules files will be deleted:"
+  cmdLog "${strStep}" >> "${fileLog}" ; cmdEcho "${strStep}"
+  for curFile in ${arrExpiredRules[@]}
+  do
+    strStep="[${curFile}], expiration date $(sed -nE '/#.*EXP/s/.*EXP(.*)/\1/p' "${curFile}")."
+    cmdEcho "${strStep}" | tee -a "${fileLog}"
+  done
+
+  for curFile in ${arrExpiredRules[@]};
+  do
+    strStep="Deleting expired rules file ${curFile}... "
+    echo "${strStep}" "${fileLog}"
+    rm -v "${curFile}"
+  done
+
+}
 
 function fnRecombine() {
 
@@ -393,10 +438,16 @@ do
                     cmdDbgEcho=echo;
                    ;;
     -e | --expire) shift;
-                    optExpire="US";
+                    optExpire="1";
                     ;;
     -f | --flatten ) optFlatten=1;
                     ;;
+    -L | --log ) shift;
+                      fileLog="${1}"
+                      cmdLog="echo"
+                      cmdTee="tee -a"
+                      optLog="1"
+                      ;;
     -m | --monitor ) optMonitor=1;
                     ;;
     -M | --nomerge ) optNoMerge=1;
@@ -536,10 +587,10 @@ ${cmdEcho} -e "${LINENO} : Merging is next\n"
 
 if [ ${optNocomment} -eq 0 ] || [ ${optNoMerge} -eq 0 ] ;
 then
-  strStep="Merging comments back with rules ";
+  strStep="Line: ${LINENO} : Merging comments back with rules ";
   echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
   fnMergeComments;
-  if [ -n "${optExpire}" ];
+  if [ "${optExpire}" -eq 1 ];
   then
     strStep="Regrouping and rules with expiration tags";
     fnSplitExpirations;
@@ -547,6 +598,12 @@ then
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
 fi;
 
+
+if [ ${optExpire} -eq 1 ];
+then
+  strStep="Line: ${LINENO} : Removing expired rules...";
+  fnRmExpiredAccounts
+fi
 
 
 ${cmdEcho} -e "\n\n${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
