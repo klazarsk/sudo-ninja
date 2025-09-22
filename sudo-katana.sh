@@ -94,29 +94,34 @@ echo -e "
     ${otagBold} -s | --input ${ctag}${otagItal}[filename]${ctag}
         Input file you want to process
 
-    ${otagBold} -d | --workingDirectory${ctag}
-        working directory (not implemented yet)
     ${otagBold} -D | --debug
         Debug mode which turns on sleeps, pause breaks waiting for keypress
         to continue, allowing for review and analysis of intermediate files
 
-    ${otagBold}  -e | --expire${ctag}
+    ${otagBold} -e | --expire${ctag}
         Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
-        non-8601 date format driven by client's preexisting data
-        Will implement 8601-friendly method later
+        non-8601 date format driven by client's preexisting data. Utility
+        converts all dates to ISO8601 format for internal processing. We do
+        recommend switching to YYYY-MM-DD format for future EXP tags!
+
+    ${otagBold} -f | --flatten${ctag}
+        This flattens multi-line aliases, rules, etc. into single, flat lines
+        for easier processing and pruning of inactive/deleted users, hosts,
+        groups, and orphaned aliases in cases where all member tokens have been
+        removed.
+
+    ${otagBold} -l | --log | --report ${ctag}${otagItal}[Log Filename]${ctag}
+        Specifying logging will capture most output and log most actions
+        to the specified filename. ${otagItal}Partially implemented${ctag}
 
     ${otagBold} -m | --monitor${ctag}
-        Monitor tail of ls -lhtr of target directory.
+        Monitor tail of ls -lhtr of target directory when appropriate.
         WARNING! This is VERY slow! Use ONLY for debugging!
-        (not fully implemented/not tested)
+        (not fully implemented/not tested yet)
 
     ${otagBold} -M | --nomerge${ctag}
         Don't merge the comments back in - this is good for
         further processing of the split files before recombining.
-
-    ${otagBold} -N | --nuke${ctag}
-        Nuke from orbit to be sure
-
 
     ${otagBold} -n | --nocomment${ctag}
         Strip out all comments
@@ -124,19 +129,21 @@ echo -e "
     ${otagBold} -o | --outputfile ${ctag}${otagItal}[filename]${ctag}
         outputfile (for recombined sudoers file)
 
+    ${otagBold} -O | --overwrite${ctag}
+        Overwrite output file
+
     ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
         PREfix for the split files which are numbered in order the rules are
-        found in --input file
+        found in --input file. This is for the temp files created in targetdir.
 
     ${otagBold} -r | --recombine${ctag}
         NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
-
-    ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
-        Specifying logging will capture most output and log most actions
-        to the specified filename.
+        Merge files back together into a monolithic sudoers file (file path
+        specified by ${otagItal}--outputfile${ctag}).
 
     ${otagBold} -s | --split${ctag}
-        disassemble
+        disassemble nosudoers into individual files for each comment+rules
+        section for easier processing and flattening of rules
 
     ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
         target directory to place split files
@@ -149,6 +156,8 @@ echo -e "
 
     ${otagBold} -vvv | --plaid${ctag}
         tl;dr (read this output you'll get a headache)
+        Lots and lots of debug output. Too muh. dahling, gobble gobble gobble,
+
 "
 }
 
@@ -168,7 +177,7 @@ function fnSpinner() {
     case "${gfxSpin}" in
       "/" ) gfxSpin="-"
         ;;
-      "-" ) gfxSpin="\\"
+      "-" ) gfxSpin="\\"https://github.com/klazarsk/sudo-ninja.git
         ;;
       "\\" ) gfxSpin="|"
         ;;
@@ -442,22 +451,22 @@ do
                     ;;
     -f | --flatten ) optFlatten=1;
                     ;;
-    -L | --log ) shift;
-                      fileLog="${1}"
-                      cmdLog="echo"
-                      cmdTee="tee -a"
-                      optLog="1"
-                      ;;
+    -l | --log ) shift;
+                    fileLog="${1}"
+                    cmdLog="echo"
+                    cmdTee="tee -a"
+                    optLog="1"
+                    ;;
     -m | --monitor ) optMonitor=1;
                     ;;
     -M | --nomerge ) optNoMerge=1;
-                    ;;
-    -N | --nuke )   optOverwrite=1;
                     ;;
     -n | --nocomment ) optNocomment=1;
                     ;;
     -o | --outputfile ) shift;
                     optOutputFile="${1}";
+                    ;;
+    -O | --overwrite )   optOverwrite=1;
                     ;;
     -p | --prefix ) shift;
                     optFilePrefix="${1}";
