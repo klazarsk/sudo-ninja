@@ -177,7 +177,7 @@ function fnSpinner() {
     case "${gfxSpin}" in
       "/" ) gfxSpin="-"
         ;;
-      "-" ) gfxSpin="\\"https://github.com/klazarsk/sudo-ninja.git
+      "-" ) gfxSpin="\\"
         ;;
       "\\" ) gfxSpin="|"
         ;;
