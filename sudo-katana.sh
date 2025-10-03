@@ -73,7 +73,7 @@ cmdDbgEcho=true;
 ##############################
 # Ensure utilities we rely upon are present
 #
-for cmdTest in sed awk grep visudo tr gawk;
+for cmdTest in sed grep visudo tr gawk;
 do
   if ! which ${cmdTest} > /dev/null 2>&1;
   then
@@ -143,7 +143,7 @@ echo -e "
 
     ${otagBold} -s | --split${ctag}
         disassemble nosudoers into individual files for each comment+rules
-        section for easier processing and flattening of rules
+        section for easier processing and . This is likely intended to clean up the output if the first sed didn't use the -n option correctly, as the first command would have passed both original and duplicated comment lines to the second.flattening of rules
 
     ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
         target directory to place split files

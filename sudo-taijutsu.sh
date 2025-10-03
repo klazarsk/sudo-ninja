@@ -223,65 +223,72 @@ function fnOldRemoveRules() {
 fnHelp() {
 echo -e "
     ${otagBold}-h | --help${ctag}
-        Display this screen
+      Display this screen
 
-    ${otagBold}-a | --active${ctag}
-       The file containing the list of words for the search spec (words to find)
+    ${otagBold}-a | --active${ctag} ${otagItal}ActiveDirectoryUserList${ctag}
+      The file containing the list of words for the search spec (words to find)
 
-       This is the filename of the accounts CSV file.
+      This is the filename of the accounts CSV file.
 
-       Be sure to generate your CSV encapsulating the fields in
-       double quotes!
+      Be sure to generate your CSV encapsulating the fields in
+      double quotes!
 
-       Format:  \"filename,field\"
+      Format:  \"filename,field\"
 
-       Example: \"--accounts AD_Users.csv,2\"
+      Example: \"--accounts AD_Users.csv,2\"
 
-       NOTE: The field selector is not implemented yet; it is hard-coded
-       for now.
-
-    ${otagBold}-D | --delete${ctag}
-       Instead of processing the --split --filespec ${otagItal}[filespec*.tmp-rule]${ctag}
-       files and ${otagBold}--move${ctag} ${otagItal}[directory]${ctag} them to a subdirectory,
-       delete them directly from --sudoersfile
-
-    ${otagBold}-f | --filespec ${ctag}${otagItal}[filespec]${ctag}
-       This is the filespec of the numbered sudoers files you wish to
-       analyze and process.
-
-       This assumes that you've --split the sudoers file for processing35735
-       using sudoers-util.
-
-       Example: --filespec
-
-    ${otagBold}-q | --quoted${ctag}
-       Use this option if the CSV fields contain commas;
-       this will cause the utility to expect quoted fields.
-       (NOT YET IMPLEMENTED)
-
-    ${otagBold}-r | --rulesdirectory ${ctag}${otagItal}[directory]${ctag}
-       This is the directory path where inactive rule files are
-       located. This assumes that you've --split the sudoers file.
-
-    ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
-       Specifying logging will capture most output and log most actions
-       to the specified filename.
-
-    ${otagBold}-m | --move ${ctag}${otagItal}[directory]${ctag}
-       This is the directory path where inactive rule files should
-       be relocated to. This assumes that you've --split.
-       This will be created a subdirectory of ${ctag}${otagItal}--rulesdirectory${ctag}.
+      NOTE: The field selector is not implemented yet; it is hard-coded
+      for now.
 
     ${otagBold}-c | --cleancomments${ctag}
-       Process comments as well
+      Process comments as well
 
-    ${otagBold}-s | --sudoersfile ) shift${ctag}
-       This is the complete flattened and recombined sudoers file to review
+    ${otagBold}-D | --delete${ctag}
+      Instead of processing the --split --filespec ${otagItal}[filespec*.tmp-rule]${ctag}
+      files and ${otagBold}--move${ctag} ${otagItal}[directory]${ctag} them to a subdirectory,
+      delete them directly from --sudoersfile
 
-       Example: ${otagBold}--filespec${ctag} ${otagItal}[sudoersfile]${ctag}
+    ${otagBold}-f | --filespec ${ctag}${otagItal}[filespec]${ctag}
+      This is the filespec of the numbered sudoers files you wish to
+      analyze and process.
 
-    ${otagBold}-v | --verbose ) optVerbose="-v"${ctag}
-       Word vomit (helpful for debugging)
+      This assumes that you've --split the sudoers file for processing35735
+      using sudoers-util.
+
+      Example: --filespec
+
+    ${otagBold}-q | --quoted${ctag}
+      Use this option if the CSV fields contain commas;
+      this will cause the utility to expect quoted fields.
+      (NOT YET IMPLEMENTED)
+
+    ${otagBold}-r | --rulesdirectory ${ctag}${otagItal}[directory]${ctag}
+      This is the directory path where inactive rule files are
+      located. This assumes that you've --split the sudoers file.
+
+    ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
+      Specifying logging will capture most output and log most actions
+      to the specified filename.
+
+    ${otagBold}-m | --move ${ctag}${otagItal}[directory]${ctag}
+      This is the directory path where inactive rule files should
+      be relocated to. This assumes that you've --split.
+      This will be created a subdirectory of ${ctag}${otagItal}--rulesdirectory${ctag}.
+
+
+    ${otagBold}-s | --sudoersfile ${ctag}
+      This is the complete flattened and recombined sudoers file to review
+
+      Example: ${otagBold}--filespec${ctag} ${otagItal}[sudoersfile]${ctag}
+
+    ${otagBold}-u | --user${ctag} ${otagItal}username${ctag}
+      To manually specify a single user; this is useful for scripting and one-
+      off user deletions (good for day-to-day maintenance when only a small
+      handful of users is deleted).
+
+
+    ${otagBold}-v | --verbose ${ctag}
+      Word vomit (helpful for debugging)
 
     ${otagRed}NOTE: If filenames include spaces or extended ASCII characters, DO
     fully escape the filenames with quotes or \\!!${ctag}
@@ -344,6 +351,10 @@ do
                       ;;
     -s | --sudoersfile ) shift;
                       fileSudoers="$1";
+                      ;;
+    -u | --user ) shift;
+                      strDeleteUser="$1";
+                      optUserDelete=1;
                       ;;
     -v | --verbose )  optVerbose="-v";
                       cmdEcho="echo"
