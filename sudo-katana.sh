@@ -608,7 +608,7 @@ then
   fnMergeComments;
   if [ "${optExpire}" -eq 1 ];
   then
-    strStep="Regrouping and rules with expiration tags";
+    strStep="Regrouping rules with expiration tags";
     fnSplitExpirations;
   fi;
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
