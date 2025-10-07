@@ -40,7 +40,7 @@ patCustomFilter2='pattern1|pattern2|etc'
 
 unset optVerbose optCommit
 eval {optDelete,optVerbose,intCounter,optReport,optQuiet}=0
-unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
+unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
 eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0
 
@@ -173,7 +173,7 @@ function fnRemoveRules() {
         echo "${curUser} would be deleted from ${curFile}";
       fi;
 
-    done < <(find ${dirTarget} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
+    done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
   done
 
 }
@@ -201,20 +201,20 @@ function fnOldRemoveRules() {
           fileContainsUser=$(grep -isl "${curUsername}" "${curFile}");
           if [ ! -z ${fileContainsUser} ]
           then
-            if [ ! -d "${dirTarget}/${dirMoveTarget}" ]
+            if [ ! -d "${dirTemp}/${dirMoveTarget}" ]
             then
-              echo "Directory ${dirTarget}/${dirMoveTarget} does not exist; attempting to create it now."
-              if ! mkdir ${optVerbose}  "${dirTarget}/${dirMoveTarget}"
+              echo "Directory ${dirTemp}/${dirMoveTarget} does not exist; attempting to create it now."
+              if ! mkdir ${optVerbose}  "${dirTemp}/${dirMoveTarget}"
               then
-                echo "Unable to create ${dirTarget}/${dirMoveTarget} at ${LINENO} in ${FUNCNAME}. Bailing out. "
+                echo "Unable to create ${dirTemp}/${dirMoveTarget} at ${LINENO} in ${FUNCNAME}. Bailing out. "
                 exit 1
               fi
             else
-              mv ${optVerbose} "${curFile}" "${dirTarget}/${dirMoveTarget}"
+              mv ${optVerbose} "${curFile}" "${dirTemp}/${dirMoveTarget}"
             fi
             unset fileContainsUser;
           fi
-        done < <(find ${dirTarget} -maxdepth 1 -type f -name "*.tmp-rule");
+        done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule");
       fi
     done  < <(awk '$0 !~ /^(#|Defaults|[[:alpha:]]+_Alias|$)/ {print $1}' "${fileSudoers}" | sort -Vu)
   fi
@@ -360,7 +360,7 @@ do
                       cmdEcho="echo"
                       ;;
     -r | --rulesdirectory ) shift;
-                      dirTarget="$1";
+                      dirTemp="$1";
                       ;;
     * )
                     echo -e "${otagRed} \n\tI couldn't understand your command. Please note if you specified an argument with spaces ";
@@ -477,12 +477,12 @@ echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taki
 
 exit 0
 
-# #   if [ -n "${arrUserInvalid}" ] && [ -d "${dirTarget}" ] && [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ge 1 ]
+# #   if [ -n "${arrUserInvalid}" ] && [ -d "${dirTemp}" ] && [ $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ge 1 ]
 # #   then
 # #     ${cmdEcho} "Line ${LINENO} : 1 or more tmp-merged or tmp-rules files found"
 # # #     ${cmdEcho} -en "from ${fileSudoers} }"
 # #
-# #     ${cmdEcho} "You requested that we compare ${dirTarget} rules against ${fileSudoers}."
+# #     ${cmdEcho} "You requested that we compare ${dirTemp} rules against ${fileSudoers}."
 # #     if [ "${#arrUserInvalid[@]}" -gt 0 ]
 # #     then
 # #       echo "User deletion triggered"
@@ -493,13 +493,13 @@ exit 0
 #
 # # if [ ! -z ${dirMoveTarget} ] ;
 # # then
-# #   ${cmdEcho} "Line ${LINENO} : You requested that we move inactive sudoer rules to ${dirTarget}/${dirMoveTarget}."
+# #   ${cmdEcho} "Line ${LINENO} : You requested that we move inactive sudoer rules to ${dirTemp}/${dirMoveTarget}."
 # #   if [ ! -z  ${fileSudoers} ]"%*s" "%*s"
 # #   then
-# #     ${cmdEcho} "Line ${LINENO} : You requested that we compare ${dirTarget} rules against ${fileSudoers}."
+# #     ${cmdEcho} "Line ${LINENO} : You requested that we compare ${dirTemp} rules against ${fileSudoers}."
 # #     if [ ! -z ${fileActiveUsers} ]
 # #     then
-# #       ${cmdEcho} "Line ${LINENO} : You requested that we compare the users in ${dirTarget}/${dirMoveTarget} and ${fileSudoers} to verify they are in fileActiveUsers."
+# #       ${cmdEcho} "Line ${LINENO} : You requested that we compare the users in ${dirTemp}/${dirMoveTarget} and ${fileSudoers} to verify they are in fileActiveUsers."
 # #       if [ ! -z ${strFilespec} ]
 # #       then
 # #         fnRemoveRules

@@ -37,7 +37,7 @@ otagItal="\e[3m"
 #
 # Clear variables so we don't inherit settings from sourced runs:
 
-unset optVerbose fileInput dirTarget optFilePrefix optOutputFile dirWorking strStep fileLog;
+unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog;
 # Initialize these variables for unary expressions:
 eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog,optDebug}=0
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
@@ -134,7 +134,7 @@ echo -e "
 
     ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
         PREfix for the split files which are numbered in order the rules are
-        found in --input file. This is for the temp files created in targetdir.
+        found in --input file. This is for the temp files created in tempdir.
 
     ${otagBold} -r | --recombine${ctag}
         NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
@@ -143,10 +143,10 @@ echo -e "
 
     ${otagBold} -s | --split${ctag}
         disassemble nosudoers into individual files for each comment+rules
-        section for easier processing and . This is likely intended to clean up the output if the first sed didn't use the -n option correctly, as the first command would have passed both original and duplicated comment lines to the second.flattening of rules
+        section for easier processing and flattening of rules
 
-    ${otagBold} -t | --targetdir ${ctag}${otagItal}[dirname]${ctag}
-        target directory to place split files
+    ${otagBold} -t | --tempdir ${ctag}${otagItal}[dirname]${ctag}
+        temp directory to place working files  (should ${otagItal}not${ctag} be /tmp!)
 
     ${otagBold} -v | --verbose${ctag}
         words and stuff for debugging
@@ -198,21 +198,21 @@ function fnSpinner() {
 
 function fnSplitSudoers() {
 
-  ${cmdEcho} "Entered ${FUNCNAME[0]}"
-  ${cmdWordVomit}  "Line ${LINENO} : ${FUNCNAME[0]} : \${dirTarget} ${dirTarget}, \${optFilePrefix},${optFilePrefix}";
-  if [ $(find "${dirTarget}" -name "${optFilePrefix}*" | wc -l) -eq 0 ] ;
+  ${cmdEcho} "Line ${LINENO}: Entered ${FUNCNAME[0]}"
+  ${cmdWordVomit}  "Line ${LINENO} : ${FUNCNAME[0]} : \${dirTemp} ${dirTemp}, \${optFilePrefix},${optFilePrefix}";
+  if [ $(find "${dirTemp}" -name "${optFilePrefix}*" | wc -l) -eq 0 ] ;
   then
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
     ${cmdEcho} "Proceding with nosudoers split; Please wait...";
-#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
-#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
-    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
+#     sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\[\s]+?$/\\/g; s/^([^#].*[^\])[\s]+?$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
+    sed -E '/^[\r\n]?[[:blank:]]*?$/d ; s/\\\s+$/\\/g; s/^([^#].*[^\]\s?$)$/\1\nEOR\o0/g' "${fileInput}" | csplit ${optQuiet} --suffix-format="%02d.tmp" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
 
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
     echo;
-    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp" | sort -V);
+    for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp" | sort -V);
     do
-      [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n 5 || fnSpinner
+      [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n 5 || fnSpinner
       ${cmdWordVomit} -e "\nLine ${LINENO} : ${FUNCNAME[0]} : "
       ${cmdWordVomit} "Current file: ${curFile}";
       if  [ "${optNocomment}" -ne 1 ];
@@ -233,7 +233,7 @@ function fnSplitSudoers() {
     done;
     ${cmdWordVomit} "Line ${LINENO} : ${FUNCNAME[0]} : ";
   else
-    echo "There are file conflicts matching file path ${dirTarget}/${optFilePrefix}*; please either archive or delete them or change the target path.";
+    echo "There are file conflicts matching file path ${dirTemp}/${optFilePrefix}*; please either archive or delete them or change the target path.";
     exit 1;
   fi;
 
@@ -243,9 +243,9 @@ function fnSplitSudoers() {
 function fnFlattenRules() {
   unset curFile;
   echo;
-  for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
+  for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
   do
-    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
     ${cmdWordVomit} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
     sed -E '/^#.*/p' "${curFile}" | sed -E '/^#.*/d; s/^([^\]*)\\[\s]+?$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
     echo >> "${curFile}-rule";
@@ -256,35 +256,35 @@ function fnFlattenRules() {
 
 function fnSplitExpirations () {
 
-  LINES=5;
-  intRenumber=1;Value
-  for curFile in $(find "${dirTarget}" -iname "*.tmp-merged" | sort -V );
+  local LINES=5;
+  local intRenumber=1;
+  for curFile in $(find "${dirTemp}" -iname "*.tmp-merged" | sort -V );
   do
-    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
     if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
     then
       ${cmdWordVomit} "Zero or only one expiration tag in ${curFile}, processing...\n";
-      mv ${optVerbose} "${curFile}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
+      mv ${optVerbose} "${curFile}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
       ((intRenumber++));
     else
       echo -e "\n\nMore than two EXP tags found in ${curFile}, processing...\n";
       IFS='\0';
-      sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTarget}/${optFilePrefix}" - '/EOR/' '{*}';
+      sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
       unset IFS;
-      for fileCorrection in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
+      for fileCorrection in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
       do
         ${cmdWordVomit} "$(${cmdDate}) Multiple expiration tags in ${curFile}. Correcting."; sleep .3;
-        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner;
-        mv ${optVerbose} "${fileCorrection}" "${dirTarget}/${optFilePrefix}${intRenumber}.remerged";
+        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
+        mv ${optVerbose} "${fileCorrection}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
         ((intRenumber++));
       done;
       rm ${optVerbose} "${curFile}"
     fi
   done;
 
-  for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.remerged" | sort -V);
+  for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.remerged" | sort -V);
   do
-    mv ${optVerbose} "${curFile}" "${dirTarget}/$(basename --suffix "remerged" "${curFile}")tmp-merged";
+    mv ${optVerbose} "${curFile}" "${dirTemp}/$(basename --suffix "remerged" "${curFile}")tmp-merged";
   done;
 
 }
@@ -292,10 +292,10 @@ function fnSplitExpirations () {
 function fnRmExpiredAccounts() {
 
   declare arrExpiredRules;
-  dtToday="$(date +"%Y-%m-%d")"
-  set intCounter=0
+  local dtToday="$(date +"%Y-%m-%d")"
+  local intCounter=0
 
-  for curFile in $(find "${dirTarget}" -name "*.tmp-merged" | sort -V);
+  for curFile in $(find "${dirTemp}" -name "*.tmp-merged" | sort -V);
   do
     strStep="Scanning ${curFile} for expired rules... "
     fnSpinner
@@ -317,11 +317,11 @@ function fnRmExpiredAccounts() {
   done
 
   strStep="The following ${intCounter} rules files will be deleted:"
-  cmdLog "${strStep}" >> "${fileLog}" ; cmdEcho "${strStep}"
+  ${cmdLog} "${strStep}" >> "${fileLog}" ; ${cmdEcho} "${strStep}"
   for curFile in ${arrExpiredRules[@]}
   do
     strStep="[${curFile}], expiration date $(sed -nE '/#.*EXP/s/.*EXP(.*)/\1/p' "${curFile}")."
-    cmdEcho "${strStep}" | tee -a "${fileLog}"
+    $(cmdEcho) "${strStep}" | tee -a "${fileLog}"
   done
 
   for curFile in ${arrExpiredRules[@]};
@@ -356,14 +356,14 @@ function fnRecombine() {
     exit 1;
   fi;
 
-
-  if [ $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -gt 1 ]
+  ${cmdEcho} "Line ${LINENO} : ${FUNCNAME}"
+  if [ $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -gt 1 ]
   then
-    ${cmdEcho} "Checking for ${dirTarget}/${optFilePrefix}*.tmp-merged files..."
+    ${cmdEcho} "Checking for ${dirTemp}/${optFilePrefix}*.tmp-merged files..."
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
-    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-merged" | sort -V);
+    for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-merged" | sort -V);
     do
-        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
         ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : merging ${curFile} to ${optOutputFile}";
         cat "${curFile}" >> "${optOutputFile}";
         echo >> "${optOutputFile}";
@@ -372,9 +372,9 @@ function fnRecombine() {
 
   else
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : ";
-    for curFile in $(find "${dirTarget}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
+    for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
     do
-      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+      [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
       if [[ "${curFile}" == *".tmp-comment" ]] && [ ${optNocomment} -ne 1 ];
       then
         ${cmdWordVomit} -e "Line ${LINENO}: ${FUNCNAME[0]} : cat ${curFile} >> ${optOutputFile}"
@@ -394,9 +394,9 @@ function fnMergeComments() {
 
   ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
 
-  for curFile in $(find "${dirTarget}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  for curFile in $(find "${dirTemp}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
-    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTarget}" | tail -n ${LINES} || fnSpinner
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
     then
       fileMerge="${curFile}.tmp-merged";
@@ -480,8 +480,8 @@ do
                     ;;
     -s | --split )  optSplit=1;
                     ;;
-    -t | --targetdir ) shift;
-                    dirTarget="${1}";
+    -t | --tempdir ) shift;
+                    dirTemp="${1}";
                     ;;
     -v | --verbose ) optVerbose="-v";
                     cmdEcho="echo";
@@ -520,49 +520,56 @@ ${cmdWordVomit} -e "\nLine ${LINENO}: Checking for input filename" ;
 if [ ${optSplit} -eq 1 ];
 then
   ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
-
-  # If target directory doesn't exist, create it
-  if [ -n "${dirTarget}" ] && [ ! -d "${dirTarget}" ];
+  if [ -n "${dirTemp}" ] & [ -d "${dirTemp}" ] ;
   then
-    ${cmdEcho} "${dirTarget} does not exist; creating it now:";
-    mkdir ${optVerbose} "${dirTarget}";
-    if [ ! $? == 0 ];
+    ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
+    # If target directory doesn't exist, create it
+    if [ -n "${dirTemp}" ] && [ ! -d "${dirTemp}" ];
     then
-      echo "Error while trying to create ${dirTarget}"
-      exit 1
-    fi
-  fi;
-  if [ -z "${fileInput}" ];
-  then
-    if [ "${optRecombine}" -eq 1 ] && [ -n "${optFilePrefix}" ] && [ -d "${dirTarget}" ] && [ "$(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l)" -ge 1 ] ;
+      ${cmdEcho} "${dirTemp} does not exist; creating it now:";
+      mkdir ${optVerbose} "${dirTemp}";
+      if [ ! $? == 0 ];
+      then
+        echo "Error while trying to create ${dirTemp}"
+        exit 1
+      fi
+    fi;
+    if [ -z "${fileInput}" ];
     then
-      echo "Line ${LINENO} : No --input argument present, but --recombine, --targetdir, and --prefix specified. Attempting to recombine preexisting split files."
-      ${cmdEcho} "Line ${LINENO} :optRecombine==${optRecombine} : optFilePrefix==${optFilePrefix} : \${dirTarget}=${dirTarget} : $(find "${dirTarget}" -name "${optFilePrefix}*.*" | wc -l) files found"
+      ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]}";
+      if [ "${optRecombine}" -eq 1 ] && [ -n "${optFilePrefix}" ] && [ -d "${dirTemp}" ] && [ "$(find "${dirTemp}" -name "${optFilePrefix}*.*" | wc -l)" -ge 1 ] ;
+      then
+        echo "Line ${LINENO} : No --input argument present, but --recombine, --tempdir, and --prefix specified. Attempting to recombine preexisting split files."
+        ${cmdEcho} "Line ${LINENO} :optRecombine==${optRecombine} : optFilePrefix==${optFilePrefix} : \${dirTemp}=${dirTemp} : $(find "${dirTemp}" -name "${optFilePrefix}*.*" | wc -l) files found"
 
+      else
+        echo -e "\nLine ${LINENO} :Please supply an ${otagRed}--input [filename]${ctag}"
+        echo -e "\nYour command line:";
+        echo -e "\n\t ${cmdLine}\n";
+        exit 1;
+      fi
     else
-      echo -e "\nLine ${LINENO} :Please supply an ${otagRed}--input [filename]${ctag}"
-      echo -e "\nYour command line:";
-      echo -e "\n\t ${cmdLine}\n";
-      exit 1;
+      if [ ! -f "${fileInput}" ];
+      then
+      ${cmdWordVomit} -e "\nLine ${LINENO} : \${fileInput} ${fileInput}"
+        echo "${fileInput} is not accessible.";
+        exit 1;
+      elif [ -z "${optFilePrefix}" ];
+      then
+        echo "Line ${LINENO} :${otagRed}Please include a ${ctag}${otagBold}--prefix${ctag}${otagItal} [prefix]${ctag} argument on your command.${ctag}";
+        echo "\nYour command line:";
+        echo -e "\n\t ${cmdLine}\n";
+        exit 1;
+      else
+        ${cmdWordVomit} -e "\nLine ${LINENO}"
+        strStep="Splitting ${fileInput} to ${dirTemp}/${optFilePrefix}*"
+        ${cmdWordVomit} -e "\n${LINENO} : entering fnSplitSudoers"
+        fnSplitSudoers;
+      fi
     fi
   else
-    if [ ! -f "${fileInput}" ];
-    then
-     ${cmdWordVomit} -e "\nLine ${LINENO} : \${fileInput} ${fileInput}"
-      echo "${fileInput} is not accessible.";
-      exit 1;
-    elif [ -z "${optFilePrefix}" ];
-    then
-      echo "Line ${LINENO} :${otagRed}Please include a ${ctag}${otagBold}--prefix${ctag}${otagItal} [prefix]${ctag} argument on your command.${ctag}";
-      echo "\nYour command line:";
-      echo -e "\n\t ${cmdLine}\n";
-      exit 1;
-    else
-      ${cmdWordVomit} -e "\nLine ${LINENO}"
-      strStep="Splitting ${fileInput} to ${dirTarget}/${optFilePrefix}*"
-      ${cmdWordVomit} -e "\n${LINENO} : entering fnSplitSudoers"
-      fnSplitSudoers;
-    fi
+    echo "Please specify a --tempdir and make sure the directory exists."
+    exit 1
   fi
 fi
 
@@ -571,9 +578,9 @@ ${cmdEcho} -e "\n${LINENO} : $(${cmdDate}) : Flatten routine is next"
 if [ ${optFlatten} -eq 1 ];
 then
   # If target directory doesn't exist, bail
-  if [ -n "${dirTarget}" ] && [ ! -d "${dirTarget}" ];
+  if [ -n "${dirTemp}" ] && [ ! -d "${dirTemp}" ];
   then
-    ${cmdEcho} "${dirTarget} does not exist; please check your ${otagItal}--target [filepath]${ctag} and try again."
+    ${cmdEcho} "${dirTemp} does not exist; please check your ${otagItal}--target [filepath]${ctag} and try again."
     exit 1
   fi
 
@@ -583,7 +590,7 @@ then
 ${cmdDbgEcho} -e "\n\nAbout to start the flatten step!"
 ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
-  strStep="Flattening rules ${dirTarget}/${optFilePrefix}*.tmp-rule";
+  strStep="Flattening rules ${dirTemp}/${optFilePrefix}*.tmp-rule";
   fnFlattenRules;
   ${cmdEcho} -e "\n${LINENO} : Finished flattening rules...";
 fi;
@@ -624,7 +631,7 @@ then
   ${cmdWordVomit} -n "Line ${LINENO} : Calling fnRecombine : ";
   ${cmdEcho} -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
   fnRecombine;
-  ${cmdEcho} "${LINENO} : Finished recombining ${dirTarget}/${optFilePrefix}* into ${optOutputFile}";
+  ${cmdEcho} "${LINENO} : Finished recombining ${dirTemp}/${optFilePrefix}* into ${optOutputFile}";
   echo
 fi
 
