@@ -446,8 +446,7 @@ do
                     cmdDbgSleep=sleep;
                     cmdDbgEcho=echo;
                    ;;
-    -e | --expire) shift;
-                    optExpire="1";
+    -e | --expire)  optExpire="1";
                     ;;
     -f | --flatten ) optFlatten=1;
                     ;;
@@ -471,7 +470,7 @@ do
     -p | --prefix ) shift;
                     optFilePrefix="${1}";
                     ;;
-    -r | --recombine ) optRecombine="1";
+    -r | --recombine ) optRecombine=1;
                     ;;
     -R | --report | --log ) shift;
                     fileLog="${1}"
@@ -513,6 +512,9 @@ do
   shift ;
 done;
 
+${cmdDbgEcho} -e "\n\nAbout to start the flatten step!"
+${cmdDbgEcho} -e "[ optDebug==${optDebug}, optExpire==${optExpire}, optFilePrefix==${optFilePrefix}, optFlatten==${optFlatten}, optLog==${optLog}, optMonitor==${optMonitor}, optNocomment==${optNocomment}, optNoMerge==${optNoMerge}, optOutputFile==${optOutputFile}, optOverwrite==${optOverwrite}, optRecombine==${optRecombine} ]"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 ${cmdWordVomit} -e "\nLine ${LINENO}; optSplit = ${optSplit}"
 
@@ -621,8 +623,9 @@ then
   fnRmExpiredAccounts
 fi
 
-
-${cmdEcho} -e "\n\n${LINENO} : Recombine routine is next (optRecombine == ${optRecombine})\n";
+${cmdEcho} -e "\n\n${LINENO} : Recombine routine is next; optRecombine == ${optRecombine}\n";
+${cmdDbgEcho} -e "\n\nAbout to start the recombine step!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 if [ "${optRecombine}" -eq 1 ];
 then
