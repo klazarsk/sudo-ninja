@@ -32,7 +32,7 @@ chrTab='\t'
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
-patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
+patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
 patCustomFilter2='pattern1|pattern2|etc'
 #
 #########################
@@ -99,6 +99,7 @@ function fnSpinner() {
 
 function fnGetUserList() {
 
+# arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
 arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
 
 }
@@ -109,30 +110,55 @@ fnDeleteRules() {
   unset IFS POSIXLY_CORRECT
   ${cmdEcho} "Line ${LINENO} : Entered ${FUNCNAME} to delete ${#arrUserInvalid[@]} users."
 
-  for curUsername in "${arrUserInvalid[@]}";
-  do
+  # Create a temporary file to hold the proposed changes
+  local tmpSudoers=$(mktemp)
+  cp "${fileSudoers}" "${tmpSudoers}"
+
+  for curUsername in "${arrUserInvalid[@]}"; do
     strStep="Line: ${LINENO} : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
-    sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${fileSudoers}";
 
-    sed -i -E "s/(=.*)\b${curUsername}\b(\s*)?(.*\$)?/\1\3/g" "${fileSudoers}"
+    # Apply the sed commands to the temporary file
+    sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${tmpSudoers}"
+    sed -i -E "s/(=.*)\b${curUsername}\b(\s*)?(.*\$)?/\1\3/g" "${tmpSudoers}"
 
     ((intCounter++))
   done
 
-  # Now let's just do some cleanup, cleaning up excessive white space, orphaned commasrecombined-east-third, , and blank lines:
-  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /^$/d' "${fileSudoers}"
-  sed -i -E 's/=\s,//g' "${fileSudoers}"
-  # now let's delete aliases that have been orphaned, but report them first
-  echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers}"
-  sed -En '/=[^[:alnum:]]*$/ { /^#/!p } ;' "${fileSudoers}"
-  sed -i -E '/=[^[:alnum:]]*$/d ;' "${fileSudoers}"
+  # Apply the cleanup sed commands to the temporary file
+  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
+  sed -i -E 's/=\s,//g' "${tmpSudoers}"
+
+  # Now let's delete aliases that have been orphaned, but report them first
+  echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)"
+  sed -En '/=[^[:alnum:]]*$/ { /^#/!p } ;' "${tmpSudoers}"
+  sed -i -E '/=[^[:alnum:]]*$/d ;' "${tmpSudoers}"
+
+  # Display the proposed changes using diff
+  echo -e "\n--- Proposed Changes to ${fileSudoers} ---"
+  if diff -u "${fileSudoers}" "${tmpSudoers}"; then
+    echo "No changes detected."
+  fi
+
+  # Apply changes only if --commit is specified
+  if [ -n "${optCommit}" ] ; then
+    echo -e "\n--- Applying changes to ${fileSudoers} ---"
+    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step." >> "${fileLog}"
+    diff -u "${fileSudoers}" "${tmpSudoers}" >> "${fileLog}"
+    echo -e "\n-------------------------------------------------------------------------------\n" >> "${fileLog}"
+    mv "${tmpSudoers}" "${fileSudoers}"
+    echo "Changes applied. Old file backed up to ${tmpSudoers}"
+  else
+    echo -e "\n--- Dry run complete. No changes were written. ---"
+    rm "${tmpSudoers}" # Clean up the temporary file
+  fi
 }
+
 
 fnDeleteComments() {
 
-  $ Strip all comments which do not include a date
+  # Strip all comments which do not include a date
   sed -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|(Jan|Feb|Mar|April|May|Jun[e]?|Jul[y]?|Aug|Sep[t]?|Oct|Nov|Dec)([0-9]{1,2} [0-9]{2,4})/!d}' ${fileSudoers}
 
 }
@@ -154,71 +180,30 @@ fnIsUserActive() {
 
 }
 
-function fnRemoveRules() {
+# function fnRemoveRules() {
+#
+#   if [ ${optCleanComments} -eq 1 ]
+#   then
+#     patRule='^[#]?(Defaults|[[:alpha:]]+_Alias|%|$)'
+#   else
+#     patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
+#   fi
+#
+#   for curUser in ${arrUserInvalid};
+#   do
+#     while read curFile;
+#     do
+#
+#       if $(grep -iE "[ ,]\b${curUser}\b[ ,]" "${curFile}");
+#       then
+#         echo "${curUser} would be deleted from ${curFile}";
+#       fi;
+#
+#     done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
+#   done
+#
+# }
 
-  if [ ${optCleanComments} -eq 1 ]
-  then
-    patRule='^[#]?(Defaults|[[:alpha:]]+_Alias|%|$)'
-  else
-    patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
-  fi
-
-  for curUser in ${arrUserInvalid};
-  do
-    while read curFile;
-    do
-
-      if $(grep -iE "[ ,]${curUser}[ ,]" "${curFile}");
-      then
-        echo "${curUser} would be deleted from ${curFile}";
-      fi;
-
-    done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
-  done
-
-}
-
-
-function fnOldRemoveRules() {
-
-  if [ ${optCleanComments} -eq 1 ]
-  then
-    patRule='^[#]?(Defaults|[[:alpha:]]+_Alias|%|$)'
-  else
-    patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
-  fi
-
-  if [ ! -z ${dirMoveTarget} || ${optDelete} -eq 1 ]
-  then
-    while read curUsername;
-    do
-      strStep="Line ${LINENO} : ${FUNCNAME} : Scanning for ${curUsername}"
-      fnSpinner
-      if ! fnIsUserActive
-      then
-        while read curFile;
-        do
-          fileContainsUser=$(grep -isl "${curUsername}" "${curFile}");
-          if [ ! -z ${fileContainsUser} ]
-          then
-            if [ ! -d "${dirTemp}/${dirMoveTarget}" ]
-            then
-              echo "Directory ${dirTemp}/${dirMoveTarget} does not exist; attempting to create it now."
-              if ! mkdir ${optVerbose}  "${dirTemp}/${dirMoveTarget}"
-              then
-                echo "Unable to create ${dirTemp}/${dirMoveTarget} at ${LINENO} in ${FUNCNAME}. Bailing out. "
-                exit 1
-              fi
-            else
-              mv ${optVerbose} "${curFile}" "${dirTemp}/${dirMoveTarget}"
-            fi
-            unset fileContainsUser;
-          fi
-        done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule");
-      fi
-    done  < <(awk '$0 !~ /^(#|Defaults|[[:alpha:]]+_Alias|$)/ {print $1}' "${fileSudoers}" | sort -Vu)
-  fi
-}
 
 fnHelp() {
 echo -e "
@@ -462,7 +447,7 @@ fi
 
 if [ ${optCleanComments} -eq 1 ];
 then
-  echo "Deleting comments..."
+  echo "Deleting all comments which do not contain a date..."
   fnDeleteComments;
 fi;
 
@@ -477,33 +462,3 @@ echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taki
 
 exit 0
 
-# #   if [ -n "${arrUserInvalid}" ] && [ -d "${dirTemp}" ] && [ $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-merged" | wc -l ) -ge 1 ]
-# #   then
-# #     ${cmdEcho} "Line ${LINENO} : 1 or more tmp-merged or tmp-rules files found"
-# # #     ${cmdEcho} -en "from ${fileSudoers} }"
-# #
-# #     ${cmdEcho} "You requested that we compare ${dirTemp} rules against ${fileSudoers}."
-# #     if [ "${#arrUserInvalid[@]}" -gt 0 ]
-# #     then
-# #       echo "User deletion triggered"
-# #       fnDeleteRules
-# #     fi
-# #   fi
-#
-#
-# # if [ ! -z ${dirMoveTarget} ] ;
-# # then
-# #   ${cmdEcho} "Line ${LINENO} : You requested that we move inactive sudoer rules to ${dirTemp}/${dirMoveTarget}."
-# #   if [ ! -z  ${fileSudoers} ]"%*s" "%*s"
-# #   then
-# #     ${cmdEcho} "Line ${LINENO} : You requested that we compare ${dirTemp} rules against ${fileSudoers}."
-# #     if [ ! -z ${fileActiveUsers} ]
-# #     then
-# #       ${cmdEcho} "Line ${LINENO} : You requested that we compare the users in ${dirTemp}/${dirMoveTarget} and ${fileSudoers} to verify they are in fileActiveUsers."
-# #       if [ ! -z ${strFilespec} ]
-# #       then
-# #         fnRemoveRules
-# #       fi
-# #     fi
-# #   fi
-# # fi

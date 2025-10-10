@@ -44,12 +44,6 @@ eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optF
 
 #########################
 #
-# Snippets we will use for upcoming features:
-#
-# sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${fileSudoers}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ;' | less
-#
-#########################
-#
 # Set some sane defaults
 #
 # Unless [ -v | --verbose ] is enabled, "quiet" mode is used for commands
@@ -292,37 +286,47 @@ function fnSplitExpirations () {
 function fnRmExpiredAccounts() {
 
   declare arrExpiredRules;
-  local dtToday="$(date +"%Y-%m-%d")"
-  local intCounter=0
+  local dtToday="$(date +"%Y-%m-%d")";
+  local intCounter=0;
 
+  # Search and collect expired files (EXP date = (today - 1 day) )
   for curFile in $(find "${dirTemp}" -name "*.tmp-merged" | sort -V);
   do
-    strStep="Scanning ${curFile} for expired rules... "
+    strStep="Scanning ${curFile} for expired rules... ";
     fnSpinner
+
     if $(grep -E "#.*EXP" "${curFile}" >/dev/null);
     then
-      curExpDate=$(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/(M[Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g');
-
-  #     echo "${curExpDate}"
+      curExpDate=$(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g');
 
       if [[ "${curExpDate}" < "${dtToday}" ]];
       then
-        ((intCounter+=1))
-  #       echo "${curExpDate} < ${dtToday}"
-  #       echo -e "\nadding ${curFile} to ${arrExpiredRules}\n"
+        ((intCounter+=1));
         arrExpiredRules+=("${curFile}");
+      fi;
 
-      fi
     fi;
   done
 
-  strStep="The following ${intCounter} rules files will be deleted:"
-  ${cmdLog} "${strStep}" >> "${fileLog}" ; ${cmdEcho} "${strStep}"
-  for curFile in ${arrExpiredRules[@]}
-  do
-    strStep="[${curFile}], expiration date $(sed -nE '/#.*EXP/s/.*EXP(.*)/\1/p' "${curFile}")."
-    $(cmdEcho) "${strStep}" | tee -a "${fileLog}"
-  done
+  # Check if any files were found
+  if [[ ${intCounter} -eq 0 ]]; then
+    strStep="No expired rules files were found."
+    ${cmdLog} "${strStep}" >> "${fileLog}";
+    echo -e "\n\n${strStep}\n\n"
+    return 0
+  fi
+
+  if [ -n "${fileLog}" ]ls ;
+  then
+    strStep="The following ${intCounter} rules files will be deleted:"
+    ${cmdLog} "${strStep}" >> "${fileLog}" ; ${cmdEcho} "${strStep}"
+    for curFile in ${arrExpiredRules[@]}
+    do
+      strStep="[${curFile}], expiration date $(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g')."
+      echo -e "\n -------------------------------------------------------------------------------\n${strStep}\n" | tee -a "${fileLog}"
+      cat "${curFile}" >> "${fileLog}"
+    done;
+  fi;
 
   for curFile in ${arrExpiredRules[@]};
   do
@@ -522,7 +526,7 @@ ${cmdWordVomit} -e "\nLine ${LINENO}: Checking for input filename" ;
 if [ ${optSplit} -eq 1 ];
 then
   ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
-  if [ -n "${dirTemp}" ] & [ -d "${dirTemp}" ] ;
+  if [ -n "${dirTemp}" ] ;
   then
     ${cmdWordVomit} -n "Line ${LINENO} : ${FUNCNAME[0]} : \${fileInput}=[${fileInput}]";
     # If target directory doesn't exist, create it
