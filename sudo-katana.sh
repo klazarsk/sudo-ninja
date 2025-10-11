@@ -283,7 +283,7 @@ function fnSplitExpirations () {
 
 }
 
-function fnRmExpiredAccounts() {
+function fnRmExpiredRules() {
 
   declare arrExpiredRules;
   local dtToday="$(date +"%Y-%m-%d")";
@@ -355,7 +355,7 @@ function fnRecombine() {
   elif [[ -z "${optOutputFile}" ]];
   then
     ${cmdWordVomit} -n "Line: ${LINENO} : ${FUNCNAME[0]} : ";
-    echo -e "${otagRed}!!! ACHTUNG! Output filename not specified!!! Your command line:${ctag}";
+    echo -e "${otagRed} Output filename not specified!!! Your command line:${ctag}";
     echo -e "\n\t${cmdLine}\n";
     exit 1;
   fi;
@@ -624,7 +624,7 @@ fi;
 if [ ${optExpire} -eq 1 ];
 then
   strStep="Line: ${LINENO} : Removing expired rules...";
-  fnRmExpiredAccounts
+  fnRmExpiredRules
 fi
 
 ${cmdEcho} -e "\n\n${LINENO} : Recombine routine is next; optRecombine == ${optRecombine}\n";

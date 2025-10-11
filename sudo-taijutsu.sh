@@ -57,7 +57,7 @@ cmdTee="true"
 cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 intScreenWidth=$(( $(tput cols) - 18 ))
-
+dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
 
 ##########
 #
@@ -100,7 +100,7 @@ function fnSpinner() {
 function fnGetUserList() {
 
 # arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
-arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d  ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g  ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g  ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g  ; s/\/[[:alnum:]\*\/_-]+/ /g  ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g  ; s/ALL.*=/ /g  ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g  ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g  ; s/ +(\.[[:alnum:]_]+)+/ /g  ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g  ; /^[[:space:]]+?$/d  ; s/\([[:alpha:]]*\)/ /g  ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g  ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g  ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g  ; s/ \\\\ / /g  ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g  ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g  ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g  ; s/\sREQ[[:alnum:]_-]+\s/ /g  ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g  ; s/\\/ /g  ; /^(\s+)?$/d  ; s/=.*$//g  ; s/[ ][0-9]+(\s|$)//g  ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
+arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g ; s/\/[[:alnum:]\*\/_-]+/ /g ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g ; s/ALL.*=/ /g ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g ; s/ +(\.[[:alnum:]_]+)+/ /g ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g ; /^[[:space:]]+?$/d ; s/\([[:alpha:]]*\)/ /g ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g ; s/ \\\\ / /g ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g ; s/\sREQ[[:alnum:]_-]+\s/ /g ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g ; s/\\/ /g ; /^(\s+)?$/d ; s/=.*$//g ; s/[ ][0-9]+(\s|$)//g ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu )
 
 }
 
@@ -144,11 +144,12 @@ fnDeleteRules() {
   # Apply changes only if --commit is specified
   if [ -n "${optCommit}" ] ; then
     echo -e "\n--- Applying changes to ${fileSudoers} ---"
-    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step." >> "${fileLog}"
+    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step.\n" >> "${fileLog}"
+    echo -e "Explain the diff and how to read it."
     diff -u "${fileSudoers}" "${tmpSudoers}" >> "${fileLog}"
     echo -e "\n-------------------------------------------------------------------------------\n" >> "${fileLog}"
-    mv "${tmpSudoers}" "${fileSudoers}"
-    echo "Changes applied. Old file backed up to ${tmpSudoers}"
+    mv -v "${tmpSudoers}" "${fileSudoers}"
+    echo "Changes applied to ${fileSudoers}."
   else
     echo -e "\n--- Dry run complete. No changes were written. ---"
     rm "${tmpSudoers}" # Clean up the temporary file
@@ -180,29 +181,6 @@ fnIsUserActive() {
 
 }
 
-# function fnRemoveRules() {
-#
-#   if [ ${optCleanComments} -eq 1 ]
-#   then
-#     patRule='^[#]?(Defaults|[[:alpha:]]+_Alias|%|$)'
-#   else
-#     patRule='^(Defaults|[[:alpha:]]+_Alias|%|$)'
-#   fi
-#
-#   for curUser in ${arrUserInvalid};
-#   do
-#     while read curFile;
-#     do
-#
-#       if $(grep -iE "[ ,]\b${curUser}\b[ ,]" "${curFile}");
-#       then
-#         echo "${curUser} would be deleted from ${curFile}";
-#       fi;
-#
-#     done < <(find ${dirTemp} -maxdepth 1 -type f -name "*.tmp-rule" -o -name "*.tmp-merged" );
-#   done
-#
-# }
 
 
 fnHelp() {
@@ -228,10 +206,14 @@ echo -e "
     ${otagBold}-c | --cleancomments${ctag}
       Process comments as well
 
-    ${otagBold}-D | --delete${ctag}
+    ${otagBold}-d | --delete${ctag}
       Instead of processing the --split --filespec ${otagItal}[filespec*.tmp-rule]${ctag}
       files and ${otagBold}--move${ctag} ${otagItal}[directory]${ctag} them to a subdirectory,
       delete them directly from --sudoersfile
+
+    ${otagBold} -D | --debug
+        Debug mode which turns on sleeps, pause breaks waiting for keypress
+        to continue, allowing for review and analysis of intermediate files
 
     ${otagBold}-f | --filespec ${ctag}${otagItal}[filespec]${ctag}
       This is the filespec of the numbered sudoers files you wish to
@@ -304,8 +286,7 @@ do
                       ;;
     -a | --active )   shift;
                       fileActiveUsers="$1";
-                      ;;# echo "${arrUserInvalid[@]}" | tr ' ' '\n' > "arrUserInvalid.txt.$(date +"%Y-%m-%d_%H%M%S")"
-
+                      ;;
     -A | --abbreviate ) cmdAbbreviate="tail -n 20"
                       ;;
     -C | --cleanaliases ) optCleanAliases="1";
@@ -314,12 +295,17 @@ do
                       ;;
          --commit )   optCommit="-i"
                       ;;
-    -D | --delete )   optDelete="1";
+    -d | --delete )   optDelete="1";
+                      ;;
+    -D | --debug )    optDebug=1;
+                      cmdDbgRead=read;
+                      cmdDbgSleep=sleep;
+                      cmdDbgEcho=echo;
                       ;;
     -f | --filespec ) shift;
                       strFilespec="$1"
                       ;;
-    -L | --log ) shift;
+    -L | --log )      shift;
                       fileLog="${1}"
                       cmdLog="echo"
                       cmdTee="tee -a"
@@ -330,14 +316,14 @@ do
                       ;;
     -q | --quoted )   optCsvQuoted="1"
                       ;;
-    -Q | --quiet ) optQuiet="1"
+    -Q | --quiet )    optQuiet="1"
                       ;;
-    -r | --report ) optReport="1"
+    -r | --report )   optReport="1"
                       ;;
     -s | --sudoersfile ) shift;
                       fileSudoers="$1";
                       ;;
-    -u | --user ) shift;
+    -u | --user )     shift;
                       strDeleteUser="$1";
                       optUserDelete=1;
                       ;;
@@ -359,6 +345,7 @@ do
   shift ;
 done;
 
+
 ##############################
 #
 # Check options for sanity:
@@ -372,6 +359,27 @@ fi
 
 #
 ##############################
+#
+# Set the backup filename
+
+dtBackupSuffix="$(date +"%Y-%m-%d_%H%M")";
+fileBackup="${fileSudoers}.${dtBackupSuffix}"
+if [ -f "${fileBackup}" ];
+then
+  read -r -p "A backup file ${fileBackup} already exists; would you like to delete it? Yes/no: " strResponse ;
+  if [[ "${strResponse}" =~ ^([yY][eE][sS]|[yY])$ ]] ;
+  then
+      echo "Deleting ${fileBackup}..." ;
+      rm -v "${fileBackup}" ;
+  else
+      echo "Please archive or delete ${fileBackup}." ;
+      exit 1
+  fi ;
+fi ;
+
+#
+##############################
+
 
 if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
 then
@@ -396,23 +404,23 @@ then
     fi;
 
 
-      if [ ${optQuiet} -ne 1 ];
-      then
-        echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:"
-        for item in ${arrUserInvalid[@]}
-        do
-          echo "${item}"
-        done | ${cmdAbbreviate};
-        echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:"
-        for item in ${arrUserValid[@]}
-        do
-          echo "${item}";
-        done | ${cmdAbbreviate};
-      else
-        echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts."
-        echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts."
-        echo "(user lists omitted via --quiet option)" ;
-      fi
+    if [ ${optQuiet} -ne 1 ];
+    then
+      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:"
+      for item in ${arrUserInvalid[@]}
+      do
+        echo "${item}"
+      done | ${cmdAbbreviate};
+      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:"
+      for item in ${arrUserValid[@]}
+      do
+        echo "${item}";
+      done | ${cmdAbbreviate};
+    else
+      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts."
+      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts."
+      echo "(user lists omitted via --quiet option)" ;
+    fi
 
     if [ -f "${fileLog}" ];
     then
@@ -437,9 +445,8 @@ then
   ${cmdEcho} -en "Line ${LINENO} : You asked us to delete inactive users ";
   if [ -f "${fileSudoers}" ];
   then
-    dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
-    echo -e "\033[0K\rBacked up ${fileSudoers} to ${fileSudoers}.${dtBackupSuffix}\n";
-    cp "${fileSudoers}" "${fileSudoers}.${dtBackupSuffix}";
+    cp "${fileSudoers}" "${fileBackup}";
+    echo -e "\033[0K\rBacked up ${fileSudoers} to ${fileBackup}\n";
     fnDeleteRules
     echo -e "\n${intCounter} deleted/inactive users actioned.";
   fi
