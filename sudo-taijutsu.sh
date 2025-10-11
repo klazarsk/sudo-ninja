@@ -119,6 +119,10 @@ fnDeleteRules() {
     fnSpinner
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
 
+    ${cmdEcho} -e "\n\n${LINENO} : User deletion routine is next; optRecombine == ${optRecombine}\n";
+    ${cmdDbgEcho} -e "\n\nAbout to start the user deletion step! (see ${tmpSudoers} and ${fileSudoers})"
+    ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+
     # Apply the sed commands to the temporary file
     sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${tmpSudoers}"
     sed -i -E "s/(=.*)\b${curUsername}\b(\s*)?(.*\$)?/\1\3/g" "${tmpSudoers}"
@@ -126,9 +130,17 @@ fnDeleteRules() {
     ((intCounter++))
   done
 
+  ${cmdEcho} -e "\n\n${LINENO} : Rule deletion cleanup routine is next; optRecombine == ${optRecombine}\n";
+  ${cmdDbgEcho} -e "\n\nAbout to start the rule deletion cleanup step! (see ${tmpSudoers} and ${fileSudoers})"
+  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+
   # Apply the cleanup sed commands to the temporary file
   sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
   sed -i -E 's/=\s,//g' "${tmpSudoers}"
+
+  ${cmdEcho} -e "\n\n${LINENO} : Alias deletion routine is next; optRecombine == ${optRecombine}\n";
+  ${cmdDbgEcho} -e "\n\nAbout to start the alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
+  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
   # Now let's delete aliases that have been orphaned, but report them first
   echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)"
@@ -391,6 +403,10 @@ then
   done;
 fi
 
+${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next; optRecombine == ${optRecombine}\n";
+${cmdDbgEcho} -e "\n\nAbout to start the inactive user list generation!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+
 ${cmdEcho} "We got the inactive user list: ${arrUserInvalid[@]}"
 
 if [ "${optReport}" -eq 1 ];
@@ -438,6 +454,9 @@ then
   fi;
 fi;
 
+${cmdEcho} -e "\n\n${LINENO} : Rule deletion routine is next; optRecombine == ${optRecombine}\n";
+${cmdDbgEcho} -e "\n\nAbout to start the rule deletion step!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 ${cmdEcho} "Line ${LINENO} : About to check value of \${optDelete}(=1)";
 if [ ${optDelete} -eq 1 ];
@@ -451,6 +470,10 @@ then
     echo -e "\n${intCounter} deleted/inactive users actioned.";
   fi
 fi
+
+${cmdEcho} -e "\n\n${LINENO} : Comment deletion routine is next; optRecombine == ${optRecombine}\n";
+${cmdDbgEcho} -e "\n\nAbout to start the comment deletion step!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 if [ ${optCleanComments} -eq 1 ];
 then
