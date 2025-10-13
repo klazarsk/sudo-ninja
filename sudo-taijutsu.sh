@@ -58,7 +58,9 @@ cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 intScreenWidth=$(( $(tput cols) - 18 ))
 dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
-
+cmdDbgRead=true;
+cmdDbgSleep=true;
+cmdDbgEcho=true;
 ##########
 #
 # Notes, snippets
