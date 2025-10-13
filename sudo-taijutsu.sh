@@ -139,7 +139,7 @@ fnDeleteRules() {
   ${cmdDbgRead} -n 1 -s -r -p "any key to continue..."
 
   # Apply the cleanup sed commands to the temporary file
-  sed -i -E 's/(\s*,\s*)+/,/g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
+  sed -i -E 's/(\s*,\s*)+/, /g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
   sed -i -E 's/=\s,//g' "${tmpSudoers}"
 
   ${cmdEcho} -e "\n\nLine ${LINENO} : Alias deletion routine is next; optRecombine == ${optRecombine}\n";
