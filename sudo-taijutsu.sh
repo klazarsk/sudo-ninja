@@ -28,7 +28,8 @@ chrTab='\t'
 #########################
 #
 # This is a customizable word filter, to filter out words that our initial
-# attempt at deleting non-account words from the sudoers file missed, since
+# attempt at deleting non-account words from the sudoers filePlease modify this to handle more than two commas in a row (with optional whitespace), replacing them with a single comma
+ missed, since
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
@@ -58,9 +59,10 @@ cmdAbbreviate="cat"
 cmdLine="${0} ${@}"
 intScreenWidth=$(( $(tput cols) - 18 ))
 dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
+cmdDbgEcho=true;
 cmdDbgRead=true;
 cmdDbgSleep=true;
-cmdDbgEcho=true;
+# cmdDbgEcho=true;
 ##########
 #
 # Notes, snippets
@@ -116,14 +118,14 @@ fnDeleteRules() {
   local tmpSudoers=$(mktemp)
   cp "${fileSudoers}" "${tmpSudoers}"
 
+  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the user deletion step! (see ${tmpSudoers} and ${fileSudoers})"
+  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
   for curUsername in "${arrUserInvalid[@]}"; do
     strStep="Line: ${LINENO} : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
 
-    ${cmdEcho} -e "\n\n${LINENO} : User deletion routine is next; optRecombine == ${optRecombine}\n";
-    ${cmdDbgEcho} -e "\n\nAbout to start the user deletion step! (see ${tmpSudoers} and ${fileSudoers})"
-    ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+    ${cmdEcho} -e "\n\nLine ${LINENO} : User deletion routine is next\n";
 
     # Apply the sed commands to the temporary file
     sed -i -E "/^[^=]*\b${curUsername}\b[^=]*=/Id" "${tmpSudoers}"
@@ -132,16 +134,16 @@ fnDeleteRules() {
     ((intCounter++))
   done
 
-  ${cmdEcho} -e "\n\n${LINENO} : Rule deletion cleanup routine is next; optRecombine == ${optRecombine}\n";
-  ${cmdDbgEcho} -e "\n\nAbout to start the rule deletion cleanup step! (see ${tmpSudoers} and ${fileSudoers})"
-  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+  ${cmdEcho} -e "\n\nLine ${LINENO} : Rule deletion cleanup routine is next; optRecombine == ${optRecombine}\n";
+  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the rule deletion cleanup step! (see ${tmpSudoers} and ${fileSudoers})"
+  ${cmdDbgRead} -n 1 -s -r -p "any key to continue..."
 
   # Apply the cleanup sed commands to the temporary file
-  sed -i -E 's/(,\s,|\s,$)//g; s/=\s,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
+  sed -i -E 's/(\s*,\s*)+/,/g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
   sed -i -E 's/=\s,//g' "${tmpSudoers}"
 
-  ${cmdEcho} -e "\n\n${LINENO} : Alias deletion routine is next; optRecombine == ${optRecombine}\n";
-  ${cmdDbgEcho} -e "\n\nAbout to start the alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
+  ${cmdEcho} -e "\n\nLine ${LINENO} : Alias deletion routine is next; optRecombine == ${optRecombine}\n";
+  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
   ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
   # Now let's delete aliases that have been orphaned, but report them first
@@ -157,15 +159,15 @@ fnDeleteRules() {
 
   # Apply changes only if --commit is specified
   if [ -n "${optCommit}" ] ; then
-    echo -e "\n--- Applying changes to ${fileSudoers} ---"
-    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step.\n" >> "${fileLog}"
-    echo -e "Explain the diff and how to read it."
-    diff -u "${fileSudoers}" "${tmpSudoers}" >> "${fileLog}"
-    echo -e "\n-------------------------------------------------------------------------------\n" >> "${fileLog}"
-    mv -v "${tmpSudoers}" "${fileSudoers}"
-    echo "Changes applied to ${fileSudoers}."
+    echo -e "\n--- Applying changes to ${fileSudoers} ---";
+    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step.\n" >> "${fileLog}";
+    echo -e "Explain the diff and how to read it.";
+    diff -u "${fileSudoers}" "${tmpSudoers}" >> "${fileLog}";
+    echo -e "\n-------------------------------------------------------------------------------\n" >> "${fileLog}";
+    mv -v "${tmpSudoers}" "${fileSudoers}";
+    echo "Changes applied to ${fileSudoers}.";
   else
-    echo -e "\n--- Dry run complete. No changes were written. ---"
+    echo -e "\n--- Dry run complete. No changes were written. ---";
     rm "${tmpSudoers}" # Clean up the temporary file
   fi
 }
@@ -174,16 +176,16 @@ fnDeleteRules() {
 fnDeleteComments() {
 
   # Strip all comments which do not include a date
-  sed -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|(Jan|Feb|Mar|April|May|Jun[e]?|Jul[y]?|Aug|Sep[t]?|Oct|Nov|Dec)([0-9]{1,2} [0-9]{2,4})/!d}' ${fileSudoers}
+  sed -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|(Jan|Feb|Mar|April|May|Jun[e]?|Jul[y]?|Aug|Sep[t]?|Oct|Nov|Dec)([0-9]{1,2} [0-9]{2,4})/!d}' ${fileSudoers};
 
 }
 
 fnIsUserActive() {
 
 
-  strStep="Line ${LINENO} : ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}"
-  ${cmdEcho} "${strStep}"
-  fnSpinner
+  strStep="Line ${LINENO} : ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}";
+  ${cmdEcho} "${strStep}";
+  fnSpinner;
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
 #     ${cmdEcho} -e "${curUsername} is an active user in ${fileSudoers}."
@@ -406,7 +408,7 @@ then
 fi
 
 ${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next; optRecombine == ${optRecombine}\n";
-${cmdDbgEcho} -e "\n\nAbout to start the inactive user list generation!"
+${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the inactive user list generation!"
 ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 ${cmdEcho} "We got the inactive user list: ${arrUserInvalid[@]}"
@@ -474,8 +476,8 @@ then
 fi
 
 ${cmdEcho} -e "\n\n${LINENO} : Comment deletion routine is next; optRecombine == ${optRecombine}\n";
-${cmdDbgEcho} -e "\n\nAbout to start the comment deletion step!"
-${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
+${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the comment deletion step!"
+${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..."
 
 if [ ${optCleanComments} -eq 1 ];
 then
