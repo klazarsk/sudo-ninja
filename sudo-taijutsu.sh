@@ -29,7 +29,6 @@ chrTab='\t'
 #
 # This is a customizable word filter, to filter out words that our initial
 # attempt at deleting non-account words from the sudoers filePlease modify this to handle more than two commas in a row (with optional whitespace), replacing them with a single comma
- missed, since
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
@@ -141,15 +140,19 @@ fnDeleteRules() {
   # Apply the cleanup sed commands to the temporary file
   sed -i -E 's/(\s*,\s*)+/, /g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
   sed -i -E 's/=\s,//g' "${tmpSudoers}"
+  sed -i -E '/^#/!s/,[[:blank:]]?*$//'  "${tmpSudoers}"
 
-  ${cmdEcho} -e "\n\nLine ${LINENO} : Alias deletion routine is next; optRecombine == ${optRecombine}\n";
-  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
-  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
   # Now let's delete aliases that have been orphaned, but report them first
-  echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)"
-  sed -En '/=[^[:alnum:]]*$/ { /^#/!p } ;' "${tmpSudoers}"
-  sed -i -E '/=[^[:alnum:]]*$/d ;' "${tmpSudoers}"
+  if [ ${optOrphaned} -eq 1 ];
+  then
+    ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the orphaned alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
+    ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..."
+    echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)"
+    sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}"
+#     sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}"
+#     sed -i -E '/=[^[:alnum:]]*$/d ;' "${tmpSudoers}"
+  fi
 
   # Display the proposed changes using diff
   echo -e "\n--- Proposed Changes to ${fileSudoers} ---"
@@ -239,6 +242,9 @@ echo -e "
       using sudoers-util.
 
       Example: --filespec
+    ${otagBold}-O | --orphaned ${ctag}
+      Delete orphaned Aliases. In other words, if an alias is left with no tokens
+      to the right of the equals (=) sign, the alias is orphaned and will be deleted.
 
     ${otagBold}-q | --quoted${ctag}
       Use this option if the CSV fields contain commas;
@@ -329,6 +335,8 @@ do
                       ;;
     -m | --move )     shift;
                       dirMoveTarget="$1"
+                      ;;
+    -O | --orphaned ) optOrphaned="1"
                       ;;
     -q | --quoted )   optCsvQuoted="1"
                       ;;
