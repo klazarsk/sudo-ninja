@@ -164,7 +164,7 @@ fnDeleteRules() {
   # Apply changes only if --commit is specified
   if [ -n "${optCommit}" ] ; then
     echo -e "\n--- Applying changes to ${fileSudoers} ---";
-    echo -e "\n-------------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step.\n" >> "${fileLog}";
+    echo -e "\n-------------------------------------------------------------------------\nThe following changes were made to ${fileSudoers} during the fnDeleteRules step.\n" >> "${fileLog}";
     echo -e "Explain the diff and how to read it.";
     diff -u "${fileSudoers}" "${tmpSudoers}" >> "${fileLog}";
     echo -e "\n-------------------------------------------------------------------------------\n" >> "${fileLog}";
