@@ -32,7 +32,8 @@ chrTab='\t'
 # it's impossible to arrive at a one-size-fits-all without a massive increase
 # in lines of code (for which bash isn't terribly efficient)
 
-patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
+# patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
+patCustomFilter='apache|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
 patCustomFilter2='pattern1|pattern2|etc'
 #
 #########################
@@ -51,7 +52,6 @@ cmdLog="true"
 set +x
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "${dtStart8601}: sudo-chop started."
 cmdEcho="true"
 cmdTee="true"
 cmdAbbreviate="cat"
@@ -381,6 +381,7 @@ do
   shift ;
 done;
 
+echo "${dtStart8601}: sudo-chop started." | ${cmdTee} "${fileLog}"
 
 ##############################
 #

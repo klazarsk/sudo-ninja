@@ -18,7 +18,7 @@ popular culture and the vocabulary is more expansive.
 Not this file.
 
 Chops, slices, dices, splits, and reassembles sudoer files, and flattens multiline 
-sudoer rules.
+sudoer rules, and also removes expired rules. 
 
 # sudo-taijutsu.sh
 
@@ -37,11 +37,11 @@ a user appears in the sudoers file!
 ..and you guessed it. Also not this README.md file.
 
 The current version does nothing yet; I only threw a few code fragments in for a 
-placeholder.
+placeholder. This utility will come later. 
 
 # README.md
 
-This file 
+This file you are reading right now. 
 
 
 # Current Status: 
