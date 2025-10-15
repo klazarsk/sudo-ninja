@@ -134,30 +134,31 @@ fnDeleteRules() {
   done
 
   ${cmdEcho} -e "\n\nLine ${LINENO} : Rule deletion cleanup routine is next; optRecombine == ${optRecombine}\n";
-  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the rule deletion cleanup step! (see ${tmpSudoers} and ${fileSudoers})"
-  ${cmdDbgRead} -n 1 -s -r -p "any key to continue..."
+  ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the rule deletion cleanup step! (see ${tmpSudoers} and ${fileSudoers})";
+  ${cmdDbgRead} -n 1 -s -r -p "any key to continue...";
 
-  # Apply the cleanup sed commands to the temporary file
-  sed -i -E 's/(\s*,\s*)+/, /g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}"
-  sed -i -E 's/=\s,//g' "${tmpSudoers}"
-  sed -i -E '/^#/!s/,[[:blank:]]?*$//'  "${tmpSudoers}"
+  # Apply the cleanup sed commands to the temporary fil
+  sed -i -E 's/(\s*,\s*)+/, /g ; s/,[\s]+?$//g; s/=[\s]?,/=/g; s/ +/ /g; /^$/d' "${tmpSudoers}";
+  sed -i -E 's/=\s,//g' "${tmpSudoers}";
+  sed -i -E '/^#/!s/,[[:blank:]]?*$//'  "${tmpSudoers}";
 
 
   # Now let's delete aliases that have been orphaned, but report them first
   if [ ${optOrphaned} -eq 1 ];
   then
-    ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the orphaned alias deletion step! (see ${tmpSudoers} and ${fileSudoers})"
-    ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..."
-    echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)"
-    sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}"
-#     sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}"
-#     sed -i -E '/=[^[:alnum:]]*$/d ;' "${tmpSudoers}"
+    ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the orphaned alias deletion step! (see ${tmpSudoers} and ${fileSudoers})";
+    ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue...";
+    echo -e "\nThe following orphaned aliases will be deleted from ${fileSudoers} (Preview)";
+    sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}";
   fi
 
   # Display the proposed changes using diff
-  echo -e "\n--- Proposed Changes to ${fileSudoers} ---"
-  if diff -u "${fileSudoers}" "${tmpSudoers}"; then
-    echo "No changes detected."
+  if [ ${optQuiet} -ne 1 ];
+  then
+    echo -e "\n--- Proposed Changes to ${fileSudoers} (in diff format)---";
+    if diff -u "${fileSudoers}" "${tmpSudoers}"; then
+      echo "No changes detected.";
+    fi
   fi
 
   # Apply changes only if --commit is specified
@@ -178,8 +179,17 @@ fnDeleteRules() {
 
 fnDeleteComments() {
 
+  if [ ${optQuiet} -ne 1 ];
+  then
+    echo "The following comments will be deleted:";
+    sed -En '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|([J][Aa][Nn]|[Ff][Ee][Bb]|[Mm][Aa][Rr]|[Aa][Pp]Rr]|[Mm][Aa][Yy]|[Jj][Uu][Nn]|[Jj][Uu][Ll]|[Aa][Uu][Gg]|[Ss][Ee][Pp]|[Oo][Cc][Tt]|[Nn][Oo][Vv]|[Dd][Ee][Cc])[[:alpha:]]+?\b(\s?[\/-]?[0-9]{1,2}[ ,\/-]\s?[0-9]{2,4})/!p}' "${fileSudoers}";
+  fi;
+
   # Strip all comments which do not include a date
-  sed -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|(Jan|Feb|Mar|April|May|Jun[e]?|Jul[y]?|Aug|Sep[t]?|Oct|Nov|Dec)([0-9]{1,2} [0-9]{2,4})/!d}' ${fileSudoers};
+  if [ ${optCommit} -eq 1 ] ;
+  then
+    sed -i -E '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|([J][Aa][Nn]|[Ff][Ee][Bb]|[Mm][Aa][Rr]|[Aa][Pp]Rr]|[Mm][Aa][Yy]|[Jj][Uu][Nn]|[Jj][Uu][Ll]|[Aa][Uu][Gg]|[Ss][Ee][Pp]|[Oo][Cc][Tt]|[Nn][Oo][Vv]|[Dd][Ee][Cc])[[:alpha:]]+?\b(\s?[\/-]?[0-9]{1,2}[ ,\/-]\s?[0-9]{2,4})/!d}' "${fileSudoers};";
+  fi;
 
 }
 
@@ -242,9 +252,11 @@ echo -e "
       using sudoers-util.
 
       Example: --filespec
+
     ${otagBold}-O | --orphaned ${ctag}
       Delete orphaned Aliases. In other words, if an alias is left with no tokens
-      to the right of the equals (=) sign, the alias is orphaned and will be deleted.
+      or only one token to the left of the equals (=) sign, the alias is orphaned
+      and will be deleted.
 
     ${otagBold}-q | --quoted${ctag}
       Use this option if the CSV fields contain commas;
@@ -500,7 +512,6 @@ dtDuration=$(( ${dtFinish} - ${dtStart} ))
 dtDurationMinutes=$(( ${dtDuration} / 60 ))
 dtDurationSeconds=$(( ${dtDuration} % 60 ))
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s."
+echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s." | ${cmdTee} "${fileLog}"
 
 exit 0
-
