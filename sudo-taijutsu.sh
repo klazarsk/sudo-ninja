@@ -51,7 +51,7 @@ optSilent="-s"
 cmdLog="true"
 set +x
 dtStart="$(date +"%s")";
-dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")"
 cmdEcho="true"
 cmdTee="true"
 cmdAbbreviate="cat"
@@ -511,7 +511,7 @@ dtFinish="$(date +"%s")";
 dtDuration=$(( ${dtFinish} - ${dtStart} ))
 dtDurationMinutes=$(( ${dtDuration} / 60 ))
 dtDurationSeconds=$(( ${dtDuration} % 60 ))
-dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
+dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S")"
 echo -e "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.\n
 
         #######  #     #  ######         ######   #     #  #     #
