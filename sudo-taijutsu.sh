@@ -33,7 +33,7 @@ chrTab='\t'
 # in lines of code (for which bash isn't terribly efficient)
 
 # patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
-patCustomFilter='apache|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
+patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
 patCustomFilter2='pattern1|pattern2|etc'
 #
 #########################
@@ -152,7 +152,7 @@ fnDeleteRules() {
     sed -i -E '/^#/! { /=[^[:alnum:]]*$/d }' "${tmpSudoers}";
   fi
 
-  # Display the proposed changes using diff
+  # Display the proposed changes using difffor item in ${arrUserInvalid[@]}
   if [ ${optQuiet} -ne 1 ];
   then
     echo -e "\n--- Proposed Changes to ${fileSudoers} (in diff format)---";
@@ -180,9 +180,13 @@ fnDeleteRules() {
 fnDeleteComments() {
 
   if [ ${optQuiet} -ne 1 ];
+  then  if [ ${optQuiet} -ne 1 ];
   then
     echo "The following comments will be deleted:";
     sed -En '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|([J][Aa][Nn]|[Ff][Ee][Bb]|[Mm][Aa][Rr]|[Aa][Pp]Rr]|[Mm][Aa][Yy]|[Jj][Uu][Nn]|[Jj][Uu][Ll]|[Aa][Uu][Gg]|[Ss][Ee][Pp]|[Oo][Cc][Tt]|[Nn][Oo][Vv]|[Dd][Ee][Cc])[[:alpha:]]+?\b(\s?[\/-]?[0-9]{1,2}[ ,\/-]\s?[0-9]{2,4})/!p}' "${fileSudoers}";
+  fi;
+    echo -e "\n\nThe following comments will be deleted:" | ${cmdTee} "${fileLog}";
+    sed -En '/^#/{/([[:digit:]]{1,2}[\/-][[:digit:]]{1,2}[\/-]([[:digit:]]{4}|[[:digit:]]{2}))|([J][Aa][Nn]|[Ff][Ee][Bb]|[Mm][Aa][Rr]|[Aa][Pp]Rr]|[Mm][Aa][Yy]|[Jj][Uu][Nn]|[Jj][Uu][Ll]|[Aa][Uu][Gg]|[Ss][Ee][Pp]|[Oo][Cc][Tt]|[Nn][Oo][Vv]|[Dd][Ee][Cc])[[:alpha:]]+?\b(\s?[\/-]?[0-9]{1,2}[ ,\/-]\s?[0-9]{2,4})/!p}' "${fileSudoers}" | ${cmdTee} "${fileLog}";
   fi;
 
   # Strip all comments which do not include a date
@@ -381,7 +385,19 @@ do
   shift ;
 done;
 
-echo "${dtStart8601}: sudo-chop started." | ${cmdTee} "${fileLog}"
+echo -e "
+################################################################################
+#
+
+    ######   #######   #####   ###  #     #        ######   #     #  #     #
+    #     #  #        #     #   #   ##    #        #     #  #     #  ##    #
+    #     #  #        #         #   # #   #        #     #  #     #  # #   #
+    ######   #####    #  ####   #   #  #  #        ######   #     #  #  #  #
+    #     #  #        #     #   #   #   # #        #   #    #     #  #   # #
+    #     #  #        #     #   #   #    ##        #    #   #     #  #    ##
+    ######   #######   #####   ###  #     #        #     #   #####   #     #
+
+${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}"
 
 ##############################
 #
@@ -417,10 +433,13 @@ fi ;
 #
 ##############################
 
+${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next; optRecombine == ${optRecombine}\n";
+${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the inactive user list generation!"
+${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
 if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
 then
-  echo -e "\tNote: Applying custom word filter: ${patCustomFilter}\n"
+  echo -e "\n\tNote: Applying custom token filter: ${patCustomFilter}\n" | ${cmdTee} "${fileLog}"
   fnGetUserList
   for curUsername in ${arrAccountList};
   do
@@ -428,55 +447,35 @@ then
   done;
 fi
 
-${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next; optRecombine == ${optRecombine}\n";
-${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the inactive user list generation!"
-${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
 
-${cmdEcho} "We got the inactive user list: ${arrUserInvalid[@]}"
 
-if [ "${optReport}" -eq 1 ];
+${cmdEcho} "We got the inactive user list:" | ${cmdTee} "${fileLog}"
+
+intTableColumns=$(echo "$(tput cols) / 20 " | bc);
+
+if [ "${optQuiet}" -ne 1 ];
 then
   if [ -f  ${fileSudoers} ] && [ -f ${fileActiveUsers} ];
   then
-    echo -e "You asked me to report on active and invalid accounts:\n" | ${cmdTee} "${fileLog}"
-    if [[ ! "${cmdAbbreviate}" == "cat" ]];
-    then
-      echo -e "\tNote: Output is abbreviated by tail -n 20";
-    fi;
+    echo -e "You asked me to report on active and invalid accounts." | ${cmdTee} "${fileLog}"
+    echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:"
+    for item in ${arrUserInvalid[@]}
+    do
+      echo "${item}";
+    done | pr  -T --columns=${intTableColumns} --width=$(tput cols) --length=$(echo "${#arrUserInvalid[@]} / ${intTableColumns}" | bc)  | ${cmdTee} "${fileLog}";
+    ${cmdDbgRead} -n 1 -s -r -p "(press shift-pageup and shift-pagedown to scroll) / Press any other keys to continue...";
 
+    echo -e "\nA total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:" | ${cmdTee} "${fileLog}";
+    for item in ${arrUserValid[@]}
+    do
+      echo "${item}";
+    done| pr  -T --columns=${intTableColumns} --width=$(tput cols) --length=$(echo "${#arrUserInvalid[@]} / ${intTableColumns}" | bc)  | ${cmdTee} "${fileLog}";
+    ${cmdDbgRead} -n 1 -s -r -p "(press shift-pageup and shift-pagedown to scroll) / Press any other keys to continue...";
 
-    if [ ${optQuiet} -ne 1 ];
-    then
-      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:"
-      for item in ${arrUserInvalid[@]}
-      do
-        echo "${item}"
-      done | ${cmdAbbreviate};
-      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:"
-      for item in ${arrUserValid[@]}
-      do
-        echo "${item}";
-      done | ${cmdAbbreviate};
-    else
-      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts."
-      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts."
-      echo "(user lists omitted via --quiet option)" ;
     fi
-
-    if [ -f "${fileLog}" ];
-    then
-      echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts:" >> "${fileLog}"
-      for item in ${arrUserInvalid[@]}
-      do
-        echo "${item}"
-      done >> "${fileLog}";
-      echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts:" >> "${fileLog}"
-      for item in ${arrUserValid[@]}
-      do
-        echo "${item}"
-      done >> "${fileLog}";
-    fi
-  fi;
+else
+  echo "A total of ${#arrUserInvalid[@]} invalid accounts were found between users, groups, and hosts." | ${cmdTee} "${fileLog}";
+  echo "A total of ${#arrUserValid[@]} valid accounts were found between users, groups, and hosts." | ${cmdTee} "${fileLog}";
 fi;
 
 ${cmdEcho} -e "\n\n${LINENO} : Rule deletion routine is next; optRecombine == ${optRecombine}\n";
@@ -513,6 +512,16 @@ dtDuration=$(( ${dtFinish} - ${dtStart} ))
 dtDurationMinutes=$(( ${dtDuration} / 60 ))
 dtDurationSeconds=$(( ${dtDuration} % 60 ))
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s." | ${cmdTee} "${fileLog}"
+echo -e "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.\n
+
+        #######  #     #  ######         ######   #     #  #     #
+        #        ##    #  #     #        #     #  #     #  ##    #
+        #        # #   #  #     #        #     #  #     #  # #   #
+        #####    #  #  #  #     #        ######   #     #  #  #  #
+        #        #   # #  #     #        #   #    #     #  #   # #
+        #        #    ##  #     #        #    #   #     #  #    ##
+        #######  #     #  ######         #     #   #####   #     #
+#
+################################################################################"  | ${cmdTee} "${fileLog}"
 
 exit 0
