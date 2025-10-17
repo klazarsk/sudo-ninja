@@ -287,7 +287,6 @@ function fnRmExpiredRules() {
 
   declare arrExpiredRules;
   local dtToday="$(date +"%Y-%m-%d")";
-  local intCounter=0;
 
   # Search and collect expired files (EXP date = (today - 1 day) )
   for curFile in $(find "${dirTemp}" -name "*.tmp-merged" | sort -V);
@@ -301,7 +300,6 @@ function fnRmExpiredRules() {
 
       if [[ "${curExpDate}" < "${dtToday}" ]];
       then
-        ((intCounter+=1));
         arrExpiredRules+=("${curFile}");
       fi;
 
@@ -309,16 +307,17 @@ function fnRmExpiredRules() {
   done
 
   # Check if any files were found
-  if [[ ${intCounter} -eq 0 ]]; then
+  if [ ${#arrExpiredRules[@]} -eq 0 ]; then
     strStep="No expired rules files were found."
-    ${cmdLog} "${strStep}" >> "${fileLog}";
+    ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..."
+    echo -e "\n${strStep}\n" | ${cmdTee} "${fileLog}"
     echo -e "\n\n${strStep}\n\n"
     return 0
   fi
 
-  if [ -n "${fileLog}" ]ls ;
+  if [ -n "${fileLog}" ] ;
   then
-    strStep="The following ${intCounter} rules files will be deleted:"
+    strStep="The following rules files will be deleted:"
     ${cmdLog} "${strStep}" >> "${fileLog}" ; ${cmdEcho} "${strStep}"
     for curFile in ${arrExpiredRules[@]}
     do
