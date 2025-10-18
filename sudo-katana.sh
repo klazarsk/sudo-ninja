@@ -57,7 +57,7 @@ cmdLog="true"
 cmdDate='date +%Y-%m-%d_%H:%M:%S'
 set +x
 dtStart="$(date +"%s")";
-dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S.%s")"
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")"
 echo "${dtStart8601}: sudo-katana started."
 cmdLine="${0} ${@}"
 cmdDbgRead=true;
@@ -515,6 +515,20 @@ do
   shift ;
 done;
 
+echo -e "
+################################################################################
+#
+
+    ######   #######   #####   ###  #     #        ######   #     #  #     #
+    #     #  #        #     #   #   ##    #        #     #  #     #  ##    #
+    #     #  #        #         #   # #   #        #     #  #     #  # #   #
+    ######   #####    #  ####   #   #  #  #        ######   #     #  #  #  #
+    #     #  #        #     #   #   #   # #        #   #    #     #  #   # #
+    #     #  #        #     #   #   #    ##        #    #   #     #  #    ##
+    ######   #######   #####   ###  #     #        #     #   #####   #     #
+
+${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}"
+
 ${cmdDbgEcho} -e "\n\nAbout to start the flatten step!"
 ${cmdDbgEcho} -e "[ optDebug==${optDebug}, optExpire==${optExpire}, optFilePrefix==${optFilePrefix}, optFlatten==${optFlatten}, optLog==${optLog}, optMonitor==${optMonitor}, optNocomment==${optNocomment}, optNoMerge==${optNoMerge}, optOutputFile==${optOutputFile}, optOverwrite==${optOverwrite}, optRecombine==${optRecombine} ]"
 ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."
@@ -647,7 +661,17 @@ dtFinish="$(date +"%s")";
 dtDuration=$(( ${dtFinish} - ${dtStart} ))
 dtDurationMinutes=$(( ${dtDuration} / 60 ))
 dtDurationSeconds=$(( ${dtDuration} % 60 ))
-dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S.%s")"
-echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s."
+dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S")"
+echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.
+
+        #######  #     #  ######         ######   #     #  #     #
+        #        ##    #  #     #        #     #  #     #  ##    #
+        #        # #   #  #     #        #     #  #     #  # #   #
+        #####    #  #  #  #     #        ######   #     #  #  #  #
+        #        #   # #  #     #        #   #    #     #  #   # #
+        #        #    ##  #     #        #    #   #     #  #    ##
+        #######  #     #  ######         #     #   #####   #     #
+#
+################################################################################"  | ${cmdTee} "${fileLog}"
 
 exit 0
