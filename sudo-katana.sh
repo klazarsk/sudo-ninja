@@ -329,10 +329,10 @@ function fnRmExpiredRules() {
 
   for curFile in ${arrExpiredRules[@]};
   do
-    strStep="Deleting expired rules file ${curFile}... "
-    echo "${strStep}" "${fileLog}"
-    rm -v "${curFile}"
-  done
+    strStep="Deleting expired rules file ${curFile}... ";
+    echo "${strStep}" | ${cmdTee} "${fileLog}";
+    rm -v "${curFile}" | ${cmdTee} "${fileLog}";
+  done;
 
 }
 
