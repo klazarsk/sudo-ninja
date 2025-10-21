@@ -73,31 +73,37 @@ cmdDbgSleep="true";
 ##########
 
 function fnSpinner() {
-  if [ -z $gfxSpin ];
-  then
-    gfxSpin="/";
-  fi
+# Check if we're running verbose mode.
+# if we are, don't run the spinner!
 
-  printf "\r\033[2K";
-  printf " %-${intScreenWidth}.${intScreenWidth}b %-12.12s \r" "${strStep}"    "${gfxSpin} ";
-  case "${gfxSpin}" in
-    "/" ) gfxSpin="-";
-      ;;
-    "-" ) gfxSpin="\\";
-      ;;
-    "\\" ) gfxSpin="|";
-      ;;
-    "|" ) gfxSpin="/";
-      ;;
-    "/" ) gfxSpin="-";
-      ;;
-    "-" ) gfxSpin="\\";
-      ;;
-    "\\" ) gfxSpin="|";
-      ;;
-    "|" ) gfxSpin="/";
-      ;;
-  esac;
+  if [ -z ${optVerbose} ];
+  then
+    if [ -z "${gfxSpin}" ];
+    then
+      gfxSpin="/";
+    fi;
+    echo -en "${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
+    case "${gfxSpin}" in
+      "/" ) gfxSpin="-";
+        ;;
+      "-" ) gfxSpin="\\";
+        ;;
+      "\\" ) gfxSpin="|";
+        ;;
+      "|" ) gfxSpin="/";
+        ;;
+      "/" ) gfxSpin="-";
+        ;;
+      "-" ) gfxSpin="\\";
+        ;;
+      "\\" ) gfxSpin="|";
+        ;;
+      "|" ) gfxSpin="/";
+        ;;
+    esac;
+  else
+    return 0;
+  fi;
 }
 
 function fnGetUserList() {
