@@ -85,7 +85,6 @@ echo -e "
     ${otagBold} -h | --help${ctag}
         helpful words and stuff (this screen)
 
-
     ${otagBold}-C | --check${ctag}
       Validate output file with visudo.
 
@@ -665,7 +664,7 @@ then
 fi;
 
 
-if [ "${optSyntaxCheck}" -eq 1 ];
+if [ ${optSyntaxCheck}  -eq 1 ];
 then
   ${cmdEcho} -e "\n\n${LINENO} : Syntax check of sudoers file is next; optRecombine == ${optOutputFile}.\n";
   ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About check syntax of [${optOutputFile}]." ;
