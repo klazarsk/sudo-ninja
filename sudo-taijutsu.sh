@@ -343,8 +343,6 @@ do
                       ;;
          --commit )   optCommit="-i"
                       ;;
-    -b | --batchdelete )   optDelete="1";
-                      ;;
     -D | --debug )    optDebug="1";
                       cmdDbgRead="read";
                       cmdDbgSleep="sleep";
