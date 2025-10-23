@@ -224,7 +224,7 @@ For the example in this document:
 1. Let's issue a `sudo-katana` command to process a monolithic sudoers file `nosudoers-east-paredmore`, to ask it to flatten rules and split the file, placing the split files using a of `sudo` in subdirectory `rules-east-paredmore`. We're also going to instruct the utility to prune expired (anything aged older than $(today - 1 day)) rules, and to recombine the split files into output monolithic sudoers file `recombined-east-paredmore`.  
 
     ```
-    $ sudo-katana.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine 
+    $ sudo-katana.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine --log logfile.txt
     ```
     
     > info:
@@ -251,8 +251,9 @@ For the example in this document:
     # it's impossible to arrive at a one-size-fits-all without a massive increase
     # in lines of code (for which bash isn't terribly efficient)
 
-    patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|x10[01][[:alnum:]-]+|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
+    patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
     patCustomFilter2='pattern1|pattern2|etc'
+
     #
     #########################
     ```
@@ -260,7 +261,7 @@ For the example in this document:
 1. After you've performed your initial customization of the  issue the following command to delete inactive accounts: 
 
     ```
-    $ sudo-taijutsu.sh --active active_account_list --sudoersfile recombined-east-paredmore --log mylog.log  --delete --commit
+    $ sudo-taijutsu.sh --sudoersfile recombined-east-paredmore --active active_account_list --log mylog.log  --delete --commit
     ```
 
 Now, open recombined-east-paredmore and review the finalized sudoers file! 
