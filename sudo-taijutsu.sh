@@ -230,6 +230,9 @@ fnIsUserActive() {
 
 fnHelp() {
 echo -e "
+
+${otagBold}Command line:${ctag} ${cmdLine}
+
     ${otagBold}-h | --help${ctag}
       Display this screen
 
@@ -311,7 +314,7 @@ echo -e "
 
     ${otagRed}NOTE: If filenames include spaces or extended ASCII characters, DO
     fully escape the filenames with quotes or \\!!${ctag}
-"
+" | less -R
 }
 
 
