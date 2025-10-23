@@ -81,6 +81,7 @@ done;
 fnHelp() {
 
 echo -e "
+${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold} -h | --help${ctag}
         helpful words and stuff (this screen)
@@ -158,7 +159,7 @@ echo -e "
         tl;dr (read this output you'll get a headache)
         Lots and lots of debug output. Too muh. dahling, gobble gobble gobble,
 
-"
+" | less -R
 }
 
 function fnSpinner() {
