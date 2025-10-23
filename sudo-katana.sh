@@ -39,7 +39,7 @@ otagItal="\e[3m";
 
 unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog;
 # Initialize these variables for unary expressions:
-eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog,optDebug}=0
+eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog,optDebug,optSyntaxCheck}=0
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
 
 #########################
@@ -240,6 +240,12 @@ function fnSplitSudoers() {
 
 
 function fnFlattenRules() {
+  strStep="Flattening rules ${dirTemp}/${optFilePrefix}*.tmp-rule";
+  if [ ! $(find ${dirTemp} -iname "${optFilePrefix}*.tmp-rule" | wc -l) -ge 1 ];
+  then
+    echo -e "\n${LINENO}:you have specified --flatten rules, however there are no ${optFilePrefix}*.tmp-rule files in directory ${dirTemp}";
+    exit 1;
+  fi
   unset curFile;
   echo;
   for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
@@ -401,7 +407,21 @@ function fnRecombine() {
 
 function fnMergeComments() {
 
-  ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
+  ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}";
+
+  ${cmdWordVomit} "Line ${LINENO} : Checking whether requirements to call ${FUNCNAME[0]} have been met";
+
+  if [ -z ${dirTemp} ];
+  then
+    echo "ERROR: --tempdir was not specified on the command line.";
+    exit 1;
+  else
+    if [ -n ${dirTemp} ] && [ ! -d ${dirTemp} ];
+    then
+      echo "--flatten is specified but --tempdir ${dirTemp} does not exist.";
+      exit 1;
+    fi;
+  fi;
 
   for curFile in $(find "${dirTemp}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
   do
@@ -474,7 +494,7 @@ do
     -o | --outputfile ) shift;
                     optOutputFile="${1}";
                     ;;
-    -O | --overwrite )   optOverwrite=1;
+    -O | --overwrite ) optOverwrite=1;
                     ;;
     -p | --prefix ) shift;
                     optFilePrefix="${1}";
@@ -488,7 +508,7 @@ do
                     ;;
     -s | --split )  optSplit=1;
                     ;;
-    -S | --syntax )   optSyntaxCheck="1";
+    -S | --syntax ) optSyntaxCheck=1;
                     ;;
     -t | --tempdir ) shift;
                     dirTemp="${1}";
@@ -536,6 +556,7 @@ echo -e "
     ######   #######   #####   ###  #     #        #     #   #####   #     #
 
 ${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}";
+
 
 ${cmdDbgEcho} -e "\n\nAbout to start the flatten step!";
 ${cmdDbgEcho} -e "[ optDebug==${optDebug}, optExpire==${optExpire}, optFilePrefix==${optFilePrefix}, optFlatten==${optFlatten}, optLog==${optLog}, optMonitor==${optMonitor}, optNocomment==${optNocomment}, optNoMerge==${optNoMerge}, optOutputFile==${optOutputFile}, optOverwrite==${optOverwrite}, optRecombine==${optRecombine} ]";
@@ -612,12 +633,10 @@ then
   fi;
 
   strStep="Flattening ${fileInput} ";
-  echo -e "\n${LINENO} : $(${cmdDate}) : ${strStep}...";
+  echo -e "\nLINE ${LINENO} : $(${cmdDate}) : ${strStep}...";
 
-  ${cmdDbgEcho} -e "\n\nAbout to start the flatten step!";
-  ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue...";
-
-  strStep="Flattening rules ${dirTemp}/${optFilePrefix}*.tmp-rule";
+  ${cmdDbgEcho} -e "\n\n${LINENO}:About to start the flatten step!";
+  ${cmdDbgRead} -n 1 -s -r -p "${LINENO}:Press any key to continue...";
   fnFlattenRules;
   ${cmdEcho} -e "\n${LINENO} : Finished flattening rules...";
 fi;
@@ -641,8 +660,7 @@ then
   ${cmdEcho} "${LINENO} : Finished Merging comments back with rules...";
 fi;
 
-
-if [ ${optExpire} -eq 1 ];
+if [ "${optExpire}" -eq 1 ];
 then
   strStep="Line: ${LINENO} : Removing expired rules...";
   fnRmExpiredRules;
@@ -664,7 +682,7 @@ then
 fi;
 
 
-if [ ${optSyntaxCheck}  -eq 1 ];
+if [ ${optSyntaxCheck} -eq 1 ];
 then
   ${cmdEcho} -e "\n\n${LINENO} : Syntax check of sudoers file is next; optRecombine == ${optOutputFile}.\n";
   ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About check syntax of [${optOutputFile}]." ;
@@ -681,7 +699,7 @@ dtDuration=$(( ${dtFinish} - ${dtStart} ));
 dtDurationMinutes=$(( ${dtDuration} / 60 ));
 dtDurationSeconds=$(( ${dtDuration} % 60 ));
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S")";
-echo "sudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.
+echo -e "\nsudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.
 
         #######  #     #  ######         ######   #     #  #     #
         #        ##    #  #     #        #     #  #     #  ##    #
