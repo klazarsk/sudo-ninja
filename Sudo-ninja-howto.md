@@ -120,7 +120,8 @@ under the "Clone" tab in the dropmenu, select https and then copy the url
 
 1. Verify the utilities are accessible by trying to run the help screens:  
     ```
-    $ sudo-katana 
+    $ sudo-katana.sh --help 
+    $ sudo-taijutsu.sh --help 
     ```
     
     
@@ -129,8 +130,8 @@ under the "Clone" tab in the dropmenu, select https and then copy the url
 * Rules flattening (makes rules easier to process)
 * File splitting (makes deleting expired rules easier)
 * Expired rules deletion (implemented and ready for testing!) 
-* Batch user/group/host account deletion (implemented but not fully tested,
-  ready for initial testing)
+* Batch user/group/host account deletion (combined monolithic list)
+    - Configurable token protection
 * Split files recombining into monolithic sudoers file
 * Comments cleanup
     - Disabled/Commented rules and aliases
