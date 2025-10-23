@@ -33,8 +33,16 @@ chrTab='\t';
 # in lines of code (for which bash isn't terribly efficient)
 
 # patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
-patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc';
-patCustomFilter2='pattern1|pattern2|etc';
+
+if [ -f /etc/sudo-ninja.conf ];
+then
+  echo -e "\n ${otagRed}Importing variables from /etc/sudo-ninja.conf...${ctag}"
+  source /etc/sudo-ninja.conf
+else
+  patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc';
+  patCustomFilter2='pattern1|pattern2|etc';
+fi;
+
 #
 #########################
 # Clear variables so we don't inherit settings from sourced runs:
@@ -246,7 +254,7 @@ ${otagBold}Command line:${ctag} ${cmdLine}
 
       Format:  \"filename,field\"
 
-      Example: \"--accounts AD_Users.csv,2\"
+      Example: --accounts \"AD_Users.csv,2\"
 
       NOTE: The field selector is not implemented yet; it is hard-coded
       for now.
@@ -284,7 +292,7 @@ ${otagBold}Command line:${ctag} ${cmdLine}
       (NOT YET IMPLEMENTED)
 
     ${otagBold}-r | --rulesdirectory ${ctag}${otagItal}[directory]${ctag}
-      This is the directory path where inactive rule files are
+      This is the directory path where inactive rule files arekeypress
       located. This assumes that you've --split the sudoers file.
 
     ${otagBold}-R | --report | --log ${ctag}${otagItal}[Log Filename]${ctag}
