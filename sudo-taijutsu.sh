@@ -74,7 +74,7 @@ cmdDbgSleep="true";
 #
 # Notes, snippets
 #
-#
+# add a --configfile feature so multiple configurations can be possible
 #
 #
 #
@@ -247,17 +247,11 @@ ${otagBold}Command line:${ctag} ${cmdLine}
     ${otagBold}-a | --active${ctag} ${otagItal}ActiveDirectoryUserList${ctag}
       The file containing the list of words for the search spec (words to find)
 
-      This is the filename of the accounts CSV file.
+      For now, this is a single, monolithic list of accounts to be preserved; to
+      create the file, concactenate a list of user account names, hostnames,
+      and group names from your Active Directory or LDAP directory, and concat-
+      enate them together to create one monolithic list.
 
-      Be sure to generate your CSV encapsulating the fields in
-      double quotes!
-
-      Format:  \"filename,field\"
-
-      Example: --accounts \"AD_Users.csv,2\"
-
-      NOTE: The field selector is not implemented yet; it is hard-coded
-      for now.
 
     ${otagBold}-c | --cleancomments${ctag}
       Process comments as well

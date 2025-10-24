@@ -226,7 +226,7 @@ For the example in this document:
     ```
     $ sudo-katana.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine --log logfile.txt
     ```
-    
+
     > info:
     > make sure you have the combined active account list (one account per line) 
     > available. The following command will `--delete` inactive users.  Also, the 
@@ -257,13 +257,66 @@ For the example in this document:
     #
     #########################
     ```
+    
+    
 
 1. After you've performed your initial customization of the  issue the following command to delete inactive accounts: 
 
+
+
     ```
-    $ sudo-taijutsu.sh --sudoersfile recombined-east-paredmore --active active_account_list --log mylog.log  --delete --commit
+    $ sudo-taijutsu.sh --sudoersfile recombined-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
     ```
 
+
+    **Command line switches explained:**
+
+
+    *--sudoersfile [sudoers_file]*
+        
+        In this example, the name of our sample file is recombined-east; change this to the filename you specified as the output file for the sudo-katana.sh step. 
+        
+    *--batchdelete* 
+    
+        This instructs the script to delete any account tokens (users, groups, hosts) from the sudoers file that match the tokens. 
+        
+        This option also requires that the `--active [filename_of_accounts_list.txt]` is required in conjuction with this option.
+        
+    *--active [accounts_you_want_to_save_filename.txt]*
+    
+        This is the active account names/tokens (usernames, hostnames, group names) exported from AD, ldap, NIS, etc. concatenated into a single, newline-delimited monolithic list. Any tokens (users, hosts, groups) not listed in this list AND not protected by the *patCustomFilter* regex patterns, will be deleted from the sudoers file.
+        
+        When *--batchdelete* is used, `--active` is required.
+        
+    *--orphaned*
+    
+        There are cases where Host, User, etc. aliases and rules may end up "orphaned" resulted in a sudoers validation failure and thus prevent privilege escalation by ALL users in the file. Therefore, it is important to clean up aliases which end up "orphaned" due to being incomplete via the account token deletion.
+        
+        In other words, and alias that is left behind like this after deletion: 
+        
+    ```
+    Host_Alias fooalias  = 
+    ```
+        
+        When these "orphaned" aliases are left in place, what results is a sudoers syntax error, which in turn prevents any user in that sudoers file from being able to escalate prileges, basically logging all administrative users apart from the actual root login, which in production is usually disallowed from logging in via ssh via password authentication. So, we inluded a feature to enable orphaned alias detection and deletion.
+        
+    *--log [log_filename.log]*
+    
+        This copies important console output to the log file, and also logs additional metadata documenting actions taken against the sudoers file for auditing and accountability purposes.
+        
+    *--commit*
+    
+        The utility will not actually delete accounts from the sudoers file unless the --commit flag is specified. However, the utility *will* split, flatten and recombine the file without the `--commit` flag.
+        
+    *--userdelete [accountname]*
+    
+        This flag instructs the utility to delete an individual account. `--userdelete` may be specified only once on the command line, and this option may only delete one account at a time. This flag may be used in combination with `--batchdelete`. 
+        
+    *--syntax*
+        
+        This flag instructs the utility to run `visudo -c -f [sudoersfile]` to check the syntax of the file and report any errors found. It will also report warnings about issues which do not break privilege escalation (such as unused aliases)
+    
+        
 Now, open recombined-east-paredmore and review the finalized sudoers file! 
 
 > tip: 
