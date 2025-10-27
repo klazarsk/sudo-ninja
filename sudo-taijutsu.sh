@@ -33,7 +33,7 @@ unset optVerbose optCommit;
 eval {optDelete,optVerbose,optReport,optQuiet}=0
 unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
-eval {optCleanAliases,optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0;
+eval optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0;
 
 #########################
 #Set some sane defaults
@@ -224,9 +224,11 @@ echo -e "
 ${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold}-h | --help${ctag}
+
       Display this screen
 
     ${otagBold}-a | --active${ctag} ${otagItal}ActiveDirectoryUserList${ctag}
+
       The file containing the list of words for the search spec (words to find)
 
       For now, this is a single, monolithic list of accounts to be preserved; to
@@ -234,17 +236,38 @@ ${otagBold}Command line:${ctag} ${cmdLine}
       and group names from your Active Directory or LDAP directory, and concat-
       enate them together to create one monolithic list.
 
-
     ${otagBold}-c | --cleancomments${ctag}
+
       Process comments as well
 
+    ${otagBold}-C | --config ) [configfile]${ctag}
+
+      Load a custom config file containing patCustomFilter and patCustomFilter2
+      variable assignments. If this option is not specified, then
+
+
+      These should contain regular expressions, with each
+      expression pipe ( | ) delimited. Example:
+
+      patCustomFilter='apache|root|oracle|mysql|sysadmin|dmadmin|docadmin|nagios|noc|patternfoo|patternbar|pattern-etc';
+      patCustomFilter2='pattern1|pattern2|etc';
+
+
     ${otagBold}-b | --batchdelete${ctag}
+
       Batch delete accounts that are not present in the `--active` account list,
       unless they're present in the patCustomFilter variables for preservation
       regardless of whether they are in the user list from your federated
       authentication list. This will work directly against --sudoersfile.
 
+    ${otagBold}-d | --deleteuser${ctag} ${otagItal}username${ctag}
+
+      To manually specify a single user; this is useful for scripting and one-
+      off user deletions (good for day-to-day maintenance when only a small
+      handful of users is deleted).
+
     ${otagBold} -D | --debug
+
         Debug mode which turns on sleeps, pause breaks waiting for keypress
         to continue, allowing for review and analysis of intermediate files
 
@@ -253,7 +276,8 @@ ${otagBold}Command line:${ctag} ${cmdLine}
       analyze and process.
 
       This assumes that you've --split the sudoers file for processing
-      using sudoers-util.
+      using sudoers-util. Only the prefix of the file needs to be specified;
+      do not specify a wildard.
 
       Example: --filespec nosudoers
 
@@ -288,10 +312,6 @@ ${otagBold}Command line:${ctag} ${cmdLine}
     ${otagBold}-S | --syntax${ctag}
       Validate output file with visudo.
 
-    ${otagBold}-u | --userdelete${ctag} ${otagItal}username${ctag}
-      To manually specify a single user; this is useful for scripting and one-
-      off user deletions (good for day-to-day maintenance when only a small
-      handful of users is deleted).
 
     ${otagBold}-v | --verbose ${ctag}
       Word vomit (helpful for debugging)
@@ -331,19 +351,21 @@ do
                       ;;
     -b | --batchdelete )   optDelete="1";
                       ;;
-    -C | --cleanaliases ) optCleanAliases="1";
-                      ;;
     -c | --cleancomments ) optCleanComments="1";
                       ;;
            --commit ) optCommit="-i"
                       ;;
-           --config ) shift;
+    -C | --config )   shift;
                       fileConfig="$1"
                       ;;
     -D | --debug )    optDebug="1";
                       cmdDbgRead="read";
                       cmdDbgSleep="sleep";
                       cmdDbgEcho="echo";
+                      ;;
+    -d | --deleteuser ) shift;
+                      strDeleteUser="${1}";
+                      optUserDelete=1;
                       ;;
     -f | --filespec ) shift;
                       strFilespec="${1}";
@@ -369,10 +391,6 @@ do
                       fileSudoers="${1}";
                       ;;
     -S | --syntax )   optSyntaxCheck="1";
-                      ;;
-    -u | --userdelete ) shift;
-                      strDeleteUser="${1}";
-                      optUserDelete=1;
                       ;;
     -v | --verbose )  optVerbose="-v";
                       cmdEcho="echo";
@@ -417,12 +435,16 @@ ${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}" ;
 
 # patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
 
-if [ -f /etc/sudo-ninja.conf ] || [ -f "${fileConfig}" ];
+if [ -f /etc/sudo-ninja.conf ] || [ -n "${fileConfig}" ];
 then
-  if [ -f "${fileConfig}" ];
+  if [ -n "${fileConfig}" ] && [ -f "${fileConfig}" ];
   then
     echo -e "\n ${otagRed}Importing variables from ${fileConfig}...${ctag}";
     source "${fileConfig}";
+  elif [ -n "${fileConfig}" ] && [ ! -f "${fileConfig}" ];
+    echo "${otagRed}ERROR: --config ${fileConfig} is specified, however ${fileConfig} was not found.";
+    fnHelp;
+    exit 1;
   else
     echo -e "\n ${otagRed}Importing variables from /etc/sudo-ninja.conf...${ctag}";
     source /etc/sudo-ninja.conf;
@@ -554,7 +576,7 @@ then
   ${cmdEcho} -e "\n\n${LINENO} : Syntax check of sudoers file is next/\n";
   ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About check syntax of [${fileSudoers}]." ;
   ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..." ;
-  echo -e "\n\n Checking ${fileSudoers} syntax and integrity with visudo:"  | ${cmdTee} "${fileLog}";
+  echo -e "\n\n Checking ${fileSudoers} syntax and integrity with visudo:"  | ${cmdpatCustomFilter2Tee} "${fileLog}";
   visudo -c -f "${fileSudoers}"  | ${cmdTee} "${fileLog}";
 fi;
 
