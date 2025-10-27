@@ -27,24 +27,6 @@ otagItal="\e[3m";
 chrTab='\t';
 #########################
 #
-# This is a customizable word filter, to filter out words that our initial
-# attempt at deleting non-account words from the sudoers filePlease modify this to handle more than two commas in a row (with optional whitespace), replacing them with a single comma
-# it's impossible to arrive at a one-size-fits-all without a massive increase
-# in lines of code (for which bash isn't terribly efficient)
-
-# patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
-
-if [ -f /etc/sudo-ninja.conf ];
-then
-  echo -e "\n ${otagRed}Importing variables from /etc/sudo-ninja.conf...${ctag}"
-  source /etc/sudo-ninja.conf
-else
-  patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc';
-  patCustomFilter2='pattern1|pattern2|etc';
-fi;
-
-#
-#########################
 # Clear variables so we don't inherit settings from sourced runs:
 
 unset optVerbose optCommit;
@@ -90,7 +72,7 @@ function fnSpinner() {
     then
       gfxSpin="/";
     fi;
-    echo -en "${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
+    echo -en "\x1b[2K\r${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
     case "${gfxSpin}" in
       "/" ) gfxSpin="-";
         ;;
@@ -337,6 +319,7 @@ fi;
 # Since user gave us stuff to do, let's process arguments. Party on!
 while [ "$1" != "" ] ;
 do
+
   case $1 in
     -h | --help )     fnHelp;
                       exit 0;
@@ -352,7 +335,10 @@ do
                       ;;
     -c | --cleancomments ) optCleanComments="1";
                       ;;
-         --commit )   optCommit="-i"
+           --commit ) optCommit="-i"
+                      ;;
+           --config ) shift;
+                      fileConfig="$1"
                       ;;
     -D | --debug )    optDebug="1";
                       cmdDbgRead="read";
@@ -422,6 +408,32 @@ ${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}" ;
 
 ##############################
 #
+# Token preservation filter
+#
+# This is a customizable word filter, to filter out words that our initial
+# attempt at deleting non-account words from the sudoers filePlease modify this to handle more than two commas in a row (with optional whitespace), replacing them with a single comma
+# it's impossible to arrive at a one-size-fits-all without a massive increase
+# in lines of code (for which bash isn't terribly efficient)
+
+# patCustomFilter='2c912219|_CISSYS|-cert-db|ALL|zoom[[:alnum:]-]+|apache|pattern8|pattern9|etc'
+
+if [ -f /etc/sudo-ninja.conf ] || [ -f "${fileConfig}" ];
+then
+  if [ -f "${fileConfig}" ];
+  then
+    echo -e "\n ${otagRed}Importing variables from ${fileConfig}...${ctag}";
+    source "${fileConfig}";
+  else
+    echo -e "\n ${otagRed}Importing variables from /etc/sudo-ninja.conf...${ctag}";
+    source /etc/sudo-ninja.conf;
+  fi;
+else
+  patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc';
+  patCustomFilter2='pattern1|pattern2|etc';
+fi;
+
+#
+#########################
 # Check options for sanity:
 
 if [ ${optQuiet} -eq 1 ] && [ "${optVerbose}" == "-v" ] ;

@@ -163,7 +163,6 @@ ${otagBold}Command line:${ctag} ${cmdLine}
 }
 
 function fnSpinner() {
-
 # Check if we're running verbose mode.
 # if we are, don't run the spinner!
 
@@ -173,7 +172,7 @@ function fnSpinner() {
     then
       gfxSpin="/";
     fi;
-    echo -en "${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
+    echo -en "\x1b[2K\r${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
     case "${gfxSpin}" in
       "/" ) gfxSpin="-";
         ;;
@@ -195,7 +194,6 @@ function fnSpinner() {
   else
     return 0;
   fi;
-
 }
 
 function fnSplitSudoers() {
