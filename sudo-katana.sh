@@ -37,7 +37,7 @@ otagItal="\e[3m";
 #
 # Clear variables so we don't inherit settings from sourced runs:
 
-unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog;
+unset optVerbose fileInput dirTemp optFilePrefix optOutputFile strStep fileLog;
 # Initialize these variables for unary expressions:
 eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optFlatten,optLog,optDebug,optSyntaxCheck}=0
 #echo {$optNocomment,$optSplit,$optOverwrite,$optQuiet,$optVerbose,$optRecombine}
@@ -462,9 +462,6 @@ do
   case $1 in
     -h | --help )   fnHelp;
                     exit 0;
-                    ;;
-    -d | --workingDirectory ) shift;
-                    dirWorking="${1}";
                     ;;
     -D | --debug ) optDebug=1;
                     cmdDbgRead="read";
