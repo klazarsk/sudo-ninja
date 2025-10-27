@@ -442,6 +442,7 @@ then
     echo -e "\n ${otagRed}Importing variables from ${fileConfig}...${ctag}";
     source "${fileConfig}";
   elif [ -n "${fileConfig}" ] && [ ! -f "${fileConfig}" ];
+  then
     echo "${otagRed}ERROR: --config ${fileConfig} is specified, however ${fileConfig} was not found.";
     fnHelp;
     exit 1;
