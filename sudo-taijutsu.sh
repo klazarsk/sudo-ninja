@@ -72,7 +72,7 @@ function fnSpinner() {
     then
       gfxSpin="/";
     fi;
-    echo -en "\x1b[2K\r${otagBold} ${strStep}    \e[1;36m${gfxSpin} ${ctag}\r";
+    echo -en "\x1b[2K\r\e[1;91m $(date +"%H:%M:%S")>\e[1;93m ${gfxSpin} ${ctag} ${otagBold}${strStep}${ctag}\r";
     case "${gfxSpin}" in
       "/" ) gfxSpin="-";
         ;;
@@ -124,7 +124,7 @@ fnDeleteRules() {
 
   for curUsername in "${arrUserInvalid[@]}";
   do
-    strStep="Line: ${LINENO} : ${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
+    strStep="${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner;
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}";
 
@@ -203,8 +203,7 @@ fnDeleteComments() {
 
 fnIsUserActive() {
 
-
-  strStep="Line ${LINENO} : ${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}";
+  strStep="${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}";
   ${cmdEcho} "${strStep}";
   fnSpinner;
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
