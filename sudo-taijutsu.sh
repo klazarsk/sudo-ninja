@@ -33,7 +33,7 @@ unset optVerbose optCommit;
 eval {optDelete,optVerbose,optReport,optQuiet}=0
 unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
-eval {optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0;
+eval {optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog,optSyntaxCheck}=0;
 
 #########################
 #Set some sane defaults
@@ -587,7 +587,7 @@ then
   ${cmdEcho} -e "\n\n${LINENO} : Syntax check of sudoers file is next/\n";
   ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About check syntax of [${fileSudoers}]." ;
   ${cmdDbgRead} -n 1 -s -r -p "Line ${LINENO} : Press any key to continue..." ;
-  echo -e "\n\n Checking ${fileSudoers} syntax and integrity with visudo:"  | ${cmdpatCustomFilter2Tee} "${fileLog}";
+  echo -e "\n\n Checking ${fileSudoers} syntax and integrity with visudo:"  | ${cmdTee} "${fileLog}";
   visudo -c -f "${fileSudoers}"  | ${cmdTee} "${fileLog}";
 fi;
 
