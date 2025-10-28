@@ -86,7 +86,7 @@ echo -e "
 ${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold} -h | --help${ctag}
-        helpful words and stuff (this screen)
+        Display help (this screen)
 
     ${otagBold}-C | --check${ctag}
       Validate output file with visudo.
@@ -133,11 +133,11 @@ ${otagBold}Command line:${ctag} ${cmdLine}
         Overwrite output file
 
     ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
+
         PREfix for the split files which are numbered in order the rules are
         found in --input file. This is for the temp files created in tempdir.
 
     ${otagBold} -r | --recombine${ctag}
-        NO DISASSEMBLE! NUMBER FIVE IS ALIVE!
         Merge files back together into a monolithic sudoers file (file path
         specified by ${otagItal}--outputfile${ctag}).
 
@@ -499,11 +499,6 @@ do
                     ;;
     -r | --recombine ) optRecombine=1;
                     ;;
-    -R | --report | --log ) shift;
-                    fileLog="${1}"
-                    cmdLog="echo"
-                    optLog="1"
-                    ;;
     -s | --split )  optSplit=1;
                     ;;
     -S | --syntax ) optSyntaxCheck=1;
@@ -513,11 +508,6 @@ do
                     ;;
     -v | --verbose ) optVerbose="-v";
                     cmdEcho="echo";
-                    unset optQuiet;
-                    ;;
-    -vv | --verbose11 ) optVerbose="-v"
-                    cmdEcho="echo";
-                    cmdWordVomit="echo";
                     unset optQuiet;
                     ;;
     -vv | --verbose11 ) optVerbose="-v"
