@@ -59,8 +59,8 @@ cmdLine="${0} ${@}";
 cmdLog="true";
 cmdTee="true"
 cmdWordVomit="true";
-dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
 dtStart="$(date +"%s")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
 echo "${dtStart8601}: sudo-katana started.";
 optQuiet="--quiet";
 optQuiet="-s";
