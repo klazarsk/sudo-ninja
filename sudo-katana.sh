@@ -174,7 +174,7 @@ function fnSpinner() {
     then
       gfxSpin="/";
     fi;
-    echo -en "\x1b[2K\r${otagBold} ${strStep}    ${gfxSpin} ${ctag}\r";
+    echo -en "\x1b[2K\r\e[1;91m>\e[1;93m ${gfxSpin} ${ctag} ${otagBold}${strStep}${ctag}\r";
     case "${gfxSpin}" in
       "/" ) gfxSpin="-";
         ;;
