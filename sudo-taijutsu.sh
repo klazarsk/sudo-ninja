@@ -33,24 +33,24 @@ unset optVerbose optCommit;
 eval {optDelete,optVerbose,optReport,optQuiet}=0
 unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
 # Initialize these variables for unary expressions:
-eval optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0;
+eval {optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog}=0;
 
 #########################
 #Set some sane defaults
-optSilent="-s";
-cmdLog="true";
-set +x;
-dtStart="$(date +"%s")";
-dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
-cmdEcho="true";
-cmdTee="true";
 cmdAbbreviate="cat";
-cmdLine="${0} ${@}";
-intScreenWidth=$(( $(tput cols) - 18 ));
-dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
 cmdDbgEcho="true";
 cmdDbgRead="true";
 cmdDbgSleep="true";
+cmdEcho="true";
+cmdLine="${0} ${@}";
+cmdLog="true";
+cmdTee="true";
+dtBackupSuffix="$(date +"%Y-%m-%d_%H%M%S")";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
+dtStart="$(date +"%s")";
+intScreenWidth=$(( $(tput cols) - 18 ));
+optSilent="-s";
+set +x;
 # cmdDbgEcho=true;
 ##########
 #
@@ -281,6 +281,15 @@ ${otagBold}Command line:${ctag} ${cmdLine}
 
       Example: --filespec nosudoers
 
+      Split files will be generated as \${dirTemp}/\${strFileSpec}0,
+      \${dirTemp}/\${strFileSpec}1, \${dirTemp}/\${strFileSpec}2, etc.
+
+    ${otagBold}-L | --log [logfilepath]${ctag}
+      This logs actions including diffs of sudoers file change to a file; this
+      may be in any directory. Logs begin and end with a banner to make it easier
+      to find the start and end of each session. It is recommended to manage the
+      logs through logrorate, enabling log rotation.
+
     ${otagBold}-O | --orphaned ${ctag}
       Delete orphaned Aliases. In other words, if an alias is left with no tokens
       or only one token to the left of the equals (=) sign, the alias is orphaned
@@ -366,11 +375,12 @@ do
     -d | --deleteuser ) shift;
                       strDeleteUser="${1}";
                       optUserDelete=1;
+
                       ;;
     -f | --filespec ) shift;
                       strFilespec="${1}";
                       ;;
-    -L | --log )      shift;
+    -l | --log )      shift;
                       fileLog="${1}";
                       cmdLog="echo";
                       cmdTee="tee -a";

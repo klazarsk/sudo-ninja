@@ -49,20 +49,22 @@ eval {optNoMerge,optMonitor,optNocomment,optSplit,optOverwrite,optRecombine,optF
 # Unless [ -v | --verbose ] is enabled, "quiet" mode is used for commands
 # and nonessential echo commands are substituted with do-nothing "true"
 #
-cmdEcho="true";
-cmdWordVomit="true";
-optQuiet="--quiet";
-optQuiet="-s";
-cmdLog="true";
+
 cmdDate='date +%Y-%m-%d_%H:%M:%S';
-set +x;
-dtStart="$(date +"%s")";
-dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
-echo "${dtStart8601}: sudo-katana started.";
-cmdLine="${0} ${@}";
+cmdDbgEcho="true";
 cmdDbgRead="true";
 cmdDbgSleep="true";
-cmdDbgEcho="true";
+cmdEcho="true";
+cmdLine="${0} ${@}";
+cmdLog="true";
+cmdTee="true"
+cmdWordVomit="true";
+dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
+dtStart="$(date +"%s")";
+echo "${dtStart8601}: sudo-katana started.";
+optQuiet="--quiet";
+optQuiet="-s";
+set +x;
 #
 ##############################
 # Ensure utilities we rely upon are present
