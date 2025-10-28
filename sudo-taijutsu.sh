@@ -219,9 +219,9 @@ fnIsUserActive() {
 
 
 fnHelp() {
-echo -e "
 
-${otagBold}Command line:${ctag} ${cmdLine}
+echo -e "
+    ${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold}-h | --help${ctag}
 
@@ -255,7 +255,7 @@ ${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold}-b | --batchdelete${ctag}
 
-      Batch delete accounts that are not present in the `--active` account list,
+      Batch delete accounts that are not present in the ${otagItal}--active${ctag} account list,
       unless they're present in the patCustomFilter variables for preservation
       regardless of whether they are in the user list from your federated
       authentication list. This will work directly against --sudoersfile.
