@@ -200,6 +200,11 @@ function fnSpinner() {
 
 function fnSplitSudoers() {
 
+  local intCounter=0;
+  unset CurFile arrFiles;
+
+
+
   ${cmdEcho} "Line ${LINENO}: Entered ${FUNCNAME[0]}"
   ${cmdWordVomit}  "Line ${LINENO} : ${FUNCNAME[0]} : \${dirTemp} ${dirTemp}, \${optFilePrefix},${optFilePrefix}";
   if [ $(find "${dirTemp}" -name "${optFilePrefix}*" | wc -l) -eq 0 ] ;
@@ -210,8 +215,16 @@ function fnSplitSudoers() {
 
     ${cmdEcho} "Initial file split complete; now processing comments and rules:";
     echo;
+
+#     for curFile in $(find "${dirTemp}" -iname "*.tmp-merged" | sort -V );
     for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp" | sort -V);
     do
+      arrFiles+=("${curFile}");
+    done;
+    for curFile in "${arrFiles[@]}";
+    do
+      ((intCounter+=1));
+      strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete";
       [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n 5 || fnSpinner
       ${cmdWordVomit} -e "\nLine ${LINENO} : ${FUNCNAME[0]} : "
       ${cmdWordVomit} "Current file: ${curFile}";
@@ -249,9 +262,18 @@ function fnFlattenRules() {
   fi
   unset curFile;
   echo;
+  local intCounter=0;
+  unset CurFile arrFiles;
   for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-rule" | sort -V);
+#   for curFile in $(find "${dirTemp}" -iname "*.tmp-merged" | sort -V );
   do
-    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
+    arrFiles+=("${curFile}");
+  done;
+  for curFile in "${arrFiles[@]}";
+  do
+    ((intCounter+=1));
+    strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; processing ${curFile}.";
+    [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
     ${cmdWordVomit} -e "\nLine: ${LINENO} : ${FUNCNAME[0]} : flattening rule in [${curFile}].";
     sed -E '/^#.*/p' "${curFile}" | sed -E '/^#.*/d; s/^([^\]*)\\[\s]+?$/\1 /g; s/^[[:blank:]]+//g; s/[[:blank:]]+/ /g;'  | tr -d '\n' >> "${curFile}-rule" ;
     echo >> "${curFile}-rule";
@@ -264,8 +286,16 @@ function fnSplitExpirations () {
 
   local LINES=5;
   local intRenumber=1;
+  local intCounter=0;
+  unset CurFile arrFiles;
   for curFile in $(find "${dirTemp}" -iname "*.tmp-merged" | sort -V );
   do
+    arrFiles+=("${curFile}");
+  done;
+  for curFile in "${arrFiles[@]}";
+  do
+    ((intCounter+=1));
+    strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; processing ${curFile}.";
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
     if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
     then
@@ -352,6 +382,8 @@ function fnRmExpiredRules() {
 function fnRecombine() {
 
   LINES=10;
+  local intCounter=0;
+  unset CurFile arrFiles;
 
   ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}"
   unset curFile;
@@ -379,17 +411,31 @@ function fnRecombine() {
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : looking for merged files";
     for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-merged" | sort -V);
     do
-        [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
-        ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : merging ${curFile} to ${optOutputFile}";
-        cat "${curFile}" >> "${optOutputFile}";
-        echo >> "${optOutputFile}";
+      arrFiles+=("${curFile}");
     done;
-
+    for curFile in "${arrFiles[@]}";
+    do
+      ((intCounter+=1));
+      strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete: Recombining ${curFile}";
+      [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
+      ${cmdWordVomit} "-e \nLine ${LINENO}: ${FUNCNAME[0]} : merging ${curFile} to ${optOutputFile}";
+      cat "${curFile}" >> "${optOutputFile}";
+      echo >> "${optOutputFile}";
+    done;
+    unset intCounter;
 
   else
     ${cmdWordVomit} "Line: ${LINENO} : ${FUNCNAME[0]} : ";
+
+
     for curFile in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-comment" -o -name "${optFilePrefix}*.tmp-rule" | sort -V);
     do
+      arrFiles+=("${curFile}");
+    done;
+    for curFile in "${arrFiles[@]}";
+    do
+      ((intCounter+=1));
+      strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete: Recombining ${curFile}";
       [[ ${optMonitor} == 1 ]] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
       if [[ "${curFile}" == *".tmp-comment" ]] && [ ${optNocomment} -ne 1 ];
       then
@@ -408,6 +454,9 @@ function fnRecombine() {
 
 function fnMergeComments() {
 
+  local intCounter=0;
+  unset CurFile arrFiles;
+
   ${cmdWordVomit} "Line ${LINENO} : Entered  ${FUNCNAME[0]}";
 
   ${cmdWordVomit} "Line ${LINENO} : Checking whether requirements to call ${FUNCNAME[0]} have been met";
@@ -424,8 +473,15 @@ function fnMergeComments() {
     fi;
   fi;
 
-  for curFile in $(find "${dirTemp}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu)
+  for curFile in $(find "${dirTemp}" -maxdepth 1 -type f -name "${optFilePrefix}*"| sed -E 's/\.[^.]*$//g'| sort -Vu);
   do
+    arrFiles+=("${curFile}");
+  done;
+  for curFile in "${arrFiles[@]}";
+  do
+    ((intCounter+=1));
+    strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; merging ${curFile}.";
+
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner
     if [ -f "${curFile}.tmp-comment" ];
     then
