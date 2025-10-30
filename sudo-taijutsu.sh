@@ -98,14 +98,18 @@ function fnSpinner() {
 
 function fnGetUserList() {
 
-arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g ; s/\/[[:alnum:]\*\/_-]+/ /g ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g ; s/ALL.*=/ /g ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g ; s/ +(\.[[:alnum:]_]+)+/ /g ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g ; /^[[:space:]]+?$/d ; s/\([[:alpha:]]*\)/ /g ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g ; s/ \\\\ / /g ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g ; s/\sREQ[[:alnum:]_-]+\s/ /g ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g ; s/\\/ /g ; /^(\s+)?$/d ; s/=.*$//g ; s/[ ][0-9]+(\s|$)//g ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu );
+unset curUser;
+for curUser in $( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\[,]?)$/d ; /^(Defaults.*|#\s?)$/d  ; s/(\/(usr)|)\/bin\/su -\s+?([[:alnum:]_-]+?|)\s+?/ /g ; s/NOPASSWD\:[[:alnum:] /_-]+/ /g ; s/\/(usr|bin|etc|opt|tmp)\/[[:alnum:] \/_-]*(systemctl|pcs|[[:alnum:]]\.sh)[[:alnum:][:space:]\/_-]+/ /g ; s/\/[[:alnum:]\*\/_-]+/ /g ; s/ALL.*=[[:space:]]\(?[[:alnum:]]+?\)?/ /g ; s/ALL.*=/ /g ; s/^[[:alpha:]]+_Alias[[:space:]]+[[:alnum:]_-]+[[:space:]]+=/ /g  ; s/[[:space:],]+-[-]?[[:alnum:]_-]+//g  ; s/[[:space:],]+|\![[:alnum:]_-]+|=[[:space:]]+?=[[:space:]]+/ /g ; s/([ ,]|^)(start|stop|restart|status|checkconfig|reload|omsagent|cybAgent|list|apache|nginx|nagios|docadmin|zoomadmin|faulty|procmon|artifactory|ZOOMADMIN|oracle|procwww|daemon|mail|_CISSYS)[[:space:]]/ /g ; s/ +(\.[[:alnum:]_]+)+/ /g ; s/ [[:alnum:]]{1,5} / /g  ; s/(\*|DEFAULT.*exit 0)/ /g ; /^[[:space:]]+?$/d ; s/\([[:alpha:]]*\)/ /g ; s/ \.[0-9]+\.[0-9]+[[alpha:]]+ / /g ; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/ /g ; s/ ([.?!,;:"'"'"'()\[\]\{\}\\\\_-]+) /\1/g ; s/ \\\\ / /g ; s/([ ,]|^)\.[[:alnum:]]+[[:space:]]/ /g ; s/( |^)[[A-Z][0-9]_]+( |$)/ /g ; s/[[:alnum:]_-]+\s(install|remove)\s(http[s]?[\\]?:|[[:alnum:]_-]+)/[\s\\]/g  ; s/[[:alnum:]_-]+\\:/ /g ; s/\sREQ[[:alnum:]_-]+\s/ /g ; s/\s(start|stop|status|restart|crs|@[[:alnum:]\.]+|[_]?CMD[S]?|[_]?[[:alnum:]]+_CMD[S]?)\s/ /g  ; s/AGS[[:alnum:]_]+(USERS|HOSTS)//g ; s/\\/ /g ; /^(\s+)?$/d ; s/=.*$//g ; s/[ ][0-9]+(\s|$)//g ; ' "${fileSudoers}" | tr ' ' '\n' | sed -E '/^$/d  ; s/\..*$//g ; /^_[[:alnum:]_]+?CM[N]?D[S]?$/d ; /^[[:punct:]]+[[:alnum:]]?$/d ; /:[[:alnum:]_-]+/d' | sed -E "s/^(${patCustomFilter})$/ /g" | sed -E "s/^(${patCustomFilter2})$/ /g"| sort -Vu );
+do
+  arrAccountList+=("${curUser}")
+done;
 
 }
 
 
 fnDeleteRules() {
 
-  local intCounter;
+  local intCounter=0;
   unset IFS POSIXLY_CORRECT;
   ${cmdEcho} "Line ${LINENO} : Entered ${FUNCNAME} to delete ${#arrUserInvalid[@]} users.";
 
@@ -126,7 +130,8 @@ fnDeleteRules() {
   for curUsername in "${arrUserInvalid[@]}";
   do
     ((intCounter+=1));
-    strStep="${FUNCNAME}  $(( 100 * ${intCounter} /  ${#arrUserInvalid[@]} ))% complete; Removing ${curUsername}'s rules from ${fileSudoers}"
+    strStep="${FUNCNAME}  $(( 100 * ${intCounter} /  ${#arrUserInvalid[@]} ))% complete; Removing ${curUsername}'s rules from ${fileSudoers}";
+#     strStep="${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner;
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}";
 
@@ -205,9 +210,8 @@ fnDeleteComments() {
 
 fnIsUserActive() {
 
-  strStep="${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}";
+#   strStep="${FUNCNAME} : Checking ${fileActiveUsers} for ${curUsername}";
   ${cmdEcho} "${strStep}";
-  fnSpinner;
   if grep -i "${curUsername}" "${fileActiveUsers}" -s > /dev/null;
   then
     arrUserValid+=("${curUsername}");
@@ -504,20 +508,23 @@ echo -e "\033[0K\rBacked up ${fileSudoers} to ${fileBackup}\n" | ${cmdTee} "${fi
 #
 ##############################
 
-intCounter=0;
 if [ -f  "${fileSudoers}" ] && [ -n "${fileActiveUsers}" ];
 then
   ${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next.\n" | ${cmdTee} "${fileLog}";
   ${cmdDbgEcho} -e "\n\nLine ${LINENO} : About to start the inactive user list generation!" ;
   ${cmdDbgRead} -n 1 -s -r -p "Press any key to continue..."  ;
   echo -e "\n\tNote: Applying custom token filter: ${patCustomFilter}\n" | ${cmdTee} "${fileLog}"
-  fnGetUserList
-  for curUsername in ${arrAccountList};
+  fnGetUserList;
+  echo "There are ${#arrAccountList[@]} footastic users."
+  intCounter=0;
+  for curUsername in "${arrAccountList[@]}";
   do
-  ((intCounter+=1))
-  strStep="fnIsUserActive $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; Checking ${fileActiveUsers} for ${curUsername}";
-  fnIsUserActive;
+    ((intCounter+=1))
+    strStep="fnIsUserActive $(( 100 * ${intCounter} /  ${#arrAccountList[@]} ))%; checking ${fileActiveUsers} for ${curUsername}";
+    fnSpinner;
+    fnIsUserActive;
   done;
+  unset intCounter;
   ${cmdEcho} "We got the inactive user list:" | ${cmdTee} "${fileLog}" ;
 fi
 
