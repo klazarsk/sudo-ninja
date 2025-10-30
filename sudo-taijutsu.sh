@@ -105,6 +105,7 @@ arrAccountList=$( sed -E ' /#(.*[^=].*|.*\s?[[:alnum:]_-]+\s?,\^C[[:alnum:]_-]+\
 
 fnDeleteRules() {
 
+  local intCounter;
   unset IFS POSIXLY_CORRECT;
   ${cmdEcho} "Line ${LINENO} : Entered ${FUNCNAME} to delete ${#arrUserInvalid[@]} users.";
 
@@ -124,7 +125,8 @@ fnDeleteRules() {
 
   for curUsername in "${arrUserInvalid[@]}";
   do
-    strStep="${FUNCNAME} : Removing ${curUsername}'s rules from ${fileSudoers}"
+    ((intCounter+=1));
+    strStep="${FUNCNAME}  $(( 100 * ${intCounter} /  ${#arrUserInvalid[@]} ))% complete; Removing ${curUsername}'s rules from ${fileSudoers}"
     fnSpinner;
     ${cmdEcho} -e "\n${strStep}\n" | ${cmdTee} "${fileLog}";
 
@@ -502,6 +504,7 @@ echo -e "\033[0K\rBacked up ${fileSudoers} to ${fileBackup}\n" | ${cmdTee} "${fi
 #
 ##############################
 
+intCounter=0;
 if [ -f  "${fileSudoers}" ] && [ -n "${fileActiveUsers}" ];
 then
   ${cmdEcho} -e "\n\n${LINENO} : Generate inactive user list routine is next.\n" | ${cmdTee} "${fileLog}";
@@ -511,6 +514,8 @@ then
   fnGetUserList
   for curUsername in ${arrAccountList};
   do
+  ((intCounter+=1))
+  strStep="fnIsUserActive $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; Checking ${fileActiveUsers} for ${curUsername}";
   fnIsUserActive;
   done;
   ${cmdEcho} "We got the inactive user list:" | ${cmdTee} "${fileLog}" ;
