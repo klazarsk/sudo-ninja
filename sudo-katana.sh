@@ -303,7 +303,8 @@ function fnSplitExpirations () {
       mv ${optVerbose} "${curFile}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
       ((intRenumber++));
     else
-      echo -e "\n\nMore than two EXP tags found in ${curFile}, processing...\n";
+      echo -en "\x1b[2K\rMore than two EXP tags found in ${curFile}, processing...";
+      ${cmdLog} "More than two EXP tags found in ${curFile}, processing...";
       IFS='\0';
       sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
       unset IFS;
