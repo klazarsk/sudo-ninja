@@ -9,7 +9,7 @@ License: GPL
 This is a small tool suite for analyzing and batch-maintaining large, monolithic
 sudoers files. It is a work in progress and not quite alpha quality yet, much 
 less beta, so please exercise extreme caution and consider it ready for 
-unit and integration testing, but not yet production-ready.  
+unit and integration testing, but not yet production-ready.
 
 This tool suite was started, inspired by a client seeking to reduce technical
 debt, but they weren't quite ready to move to IDM so we created this utility to 
@@ -87,11 +87,7 @@ this document.
     $ cd ~/Download
     ---
 
-1. Open the repository in a web browser ([https://github.com/klazarsk/sudo-ninja/](https://github.com/klazarsk/sudo-ninja/),
-   and if you want to browse and review the code you will be installing, select 
-   the _evaluation_ branch (you don't need to select the branch to just pull 
-   a clone):
-![selecting the evaluation branch of sudo ninja](images/github-select-branch.png)
+1. Open the repository in a web browser ([https://github.com/klazarsk/sudo-ninja/](https://github.com/klazarsk/sudo-ninja/)
 
 1. Click the green "code" button toward the right, then from the dropmenu, then
 under the "Clone" tab in the dropmenu, select https and then copy the url 
@@ -100,11 +96,6 @@ under the "Clone" tab in the dropmenu, select https and then copy the url
 1. Back to the terminal, clone the repository to your current working directory:  
     ```
     $ git clone git@github.com:klazarsk/sudo-ninja.git
-    ```
-
-1. Tell git to switch to the the _evaluation_ branch:  
-    ```
-    $ git checkout evaluation
     ```
 
 1. Copy the utilities to a directory in your PATH (optionally add ~/bin to your
