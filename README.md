@@ -7,15 +7,18 @@ monolithic sudoers files, inspired by the needs of one of my clients.
 
 In the spirit of my love for martial arts, I've decided to name
 this toolkit "sudo ninja" with the individual utilities named
-after either a tool, art, or technique. 
+after either a tool, art, or technique during development. 
 
 While the art I practice is Tae Kwan Do, I decided to go with a
 ninjutsu theme because ninja terminology is better known in
 popular culture and the vocabulary is more expansive.
 
-These were working names during the development cycle but now that we are 
-out of the alpha stage with the two primary utilities being mostly feature-
-complete.
+These were working names during the development cycle but now are in beta, being
+mostly feature-complete. The utilities that are included in the initial (v0.9)
+release have been renamed to their final name. 
+
+Work on sudo chōhō will come later, with details TBA. chōhō will be primarily 
+a read-only utility designed for reporting.
 
 ### Renaming the utilities
 
