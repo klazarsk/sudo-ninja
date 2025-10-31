@@ -19,17 +19,17 @@ complete.
 
 ### Renaming the utilities
 
-Now that this utility is about to enter production the utilities are going to 
-be named according to purpose and role. 
+Now that this utility is about to enter production the utilities have been
+renamed according to purpose and role. 
 
-# sudo-katana
+# sudo-chop
 
 Not this file.
 
 Chops, slices, dices, splits, and reassembles sudoer files, and flattens multiline 
 sudoer rules, and also removes expired rules. 
 
-# sudo-taijutsu.sh
+# sudo-cleanup.sh
 
 Also not this file. ;) 
 
@@ -45,8 +45,7 @@ the block of rules that the expiration applies to. --expire would ideally accept
 a string so that the tag could be "Expire" or "END" or whatever locale-specific
 language you choose to use to precede the expiry date. 
 
-
-
+Man pages and RPM will be coming by the end of the year.
 
 ## About my coding style 
 
@@ -75,8 +74,5 @@ This file you are reading right now.
 
 # Current Status: 
 
-The utility has been used in a staging lab environment and all defects reported
-have been minor. There is still work to be done around 
-
-Actual documentation will be forthcoming later in the project. 
+The utility is entering production.
 

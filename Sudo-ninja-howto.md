@@ -101,18 +101,18 @@ under the "Clone" tab in the dropmenu, select https and then copy the url
 1. Copy the utilities to a directory in your PATH (optionally add ~/bin to your
    PATH variable):  
     ```
-    $ sudo cp {sudo-katana.sh,sudo-taijutsu.sh} /usr/bin
+    $ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
     ```
 
 1. Set the execute permission bit on the files  
     ```
-    $ sudo chmod +x /usr/bin/{sudo-katana.sh,sudo-taijutsu.sh}
+    $ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
     ```
 
 1. Verify the utilities are accessible by trying to run the help screens:  
     ```
-    $ sudo-katana.sh --help 
-    $ sudo-taijutsu.sh --help 
+    $ sudo-chop.sh --help 
+    $ sudo-chop.sh --help 
     ```
     
     
@@ -165,7 +165,7 @@ Considering:
 
 # The Tools 
 
-## sudo-katana.sh
+## sudo-chop.sh
 
 This tool splits monolithic sudoers files into individual files, flattens the 
 rules for easier processing, optionally removes expired rules, and optionally 
@@ -212,10 +212,10 @@ For the example in this document:
     $ mkdir rules-east-paredmore
     ```
 
-1. Let's issue a `sudo-katana` command to process a monolithic sudoers file `nosudoers-east-paredmore`, to ask it to flatten rules and split the file, placing the split files using a of `sudo` in subdirectory `rules-east-paredmore`. We're also going to instruct the utility to prune expired (anything aged older than $(today - 1 day)) rules, and to recombine the split files into output monolithic sudoers file `recombined-east-paredmore`.  
+1. Let's issue a `sudo-chop` command to process a monolithic sudoers file `nosudoers-east-paredmore`, to ask it to flatten rules and split the file, placing the split files using a of `sudo` in subdirectory `rules-east-paredmore`. We're also going to instruct the utility to prune expired (anything aged older than $(today - 1 day)) rules, and to recombine the split files into output monolithic sudoers file `recombined-east-paredmore`.  
 
     ```
-    $ sudo-katana.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine --log logfile.txt
+    $ sudo-chop.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine --log logfile.txt
     ```
 
     > info:
@@ -224,7 +224,7 @@ For the example in this document:
     > utility WILL delete tokens which aren't actually accounts, so some of your 
     > environment-specific tribal knowledge will become essential. 
 
-1. Customize sudo-taijutsu.sh! 
+1. Customize sudo-chop.sh! 
 
     Before running the commands, you will wait to tailor some of the token 
     preservation pattern matches around line 35; these are regular expression 
@@ -256,7 +256,7 @@ For the example in this document:
 
 
     ```
-    $ sudo-taijutsu.sh --sudoersfile recombined-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
+    $ sudo-chop.sh --sudoersfile recombined-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
     ```
 
 
@@ -265,7 +265,7 @@ For the example in this document:
 
     *--sudoersfile [sudoers_file]*
         
-        In this example, the name of our sample file is recombined-east; change this to the filename you specified as the output file for the sudo-katana.sh step. 
+        In this example, the name of our sample file is recombined-east; change this to the filename you specified as the output file for the sudo-chop.sh step. 
         
     *--batchdelete* 
     
@@ -315,7 +315,7 @@ Now, open recombined-east-paredmore and review the finalized sudoers file!
 purposes. For this example, we will create recombined-east-paredmore-unpruned:
 
 ```
-$ sudo-katana.sh --recombine --input nosudoers-east-paredmore --outputfile recombined-east-paredmore-unpruned --prefix sudo --targetdir rules-east-paredmore --flatten --split 
+$ sudo-chop.sh --recombine --input nosudoers-east-paredmore --outputfile recombined-east-paredmore-unpruned --prefix sudo --targetdir rules-east-paredmore --flatten --split 
 ```
 
 
