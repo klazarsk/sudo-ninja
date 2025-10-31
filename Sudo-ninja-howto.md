@@ -224,7 +224,7 @@ For the example in this document:
     > utility WILL delete tokens which aren't actually accounts, so some of your 
     > environment-specific tribal knowledge will become essential. 
 
-1. Customize sudo-chop.sh! 
+1. Customize sudo-cleanup.sh! 
 
     Before running the commands, you will wait to tailor some of the token 
     preservation pattern matches around line 35; these are regular expression 
@@ -249,6 +249,22 @@ For the example in this document:
     #########################
     ```
     
+    In environments where you are managing multiple monolithic sudoers file, such
+    as an EU vs. US or east vs. west sudoers file, consider leveraging config 
+    files to be included at run time. For example, use the --config switch as
+    follows: 
+    
+    --config /path/to/config-file.config
+    
+    In this case you would pleace the patCustomFilter{,2} in a file, such as:
+    
+    ```
+    [user@host workingdir]# cat /etc/sudo-ninja-east.config
+    patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
+    patCustomFilter2='pattern1|pattern2|etc'
+    [user@host workingdir]# 
+    ```
+    
     
 
 1. After you've performed your initial customization of the  issue the following command to delete inactive accounts: 
@@ -256,14 +272,15 @@ For the example in this document:
 
 
     ```
-    $ sudo-chop.sh --sudoersfile recombined-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
+    $ sudo-cleanup --input recombined-east-paredmore --tempdir rules-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
     ```
+
 
 
     **Command line switches explained:**
 
 
-    *--sudoersfile [sudoers_file]*
+    *--input [sudoers_file]*
         
         In this example, the name of our sample file is recombined-east; change this to the filename you specified as the output file for the sudo-chop.sh step. 
         
@@ -272,7 +289,7 @@ For the example in this document:
         This instructs the script to delete any account tokens (users, groups, hosts) from the sudoers file that match the tokens. 
         
         This option also requires that the `--active [filename_of_accounts_list.txt]` is required in conjuction with this option.
-        
+ 
     *--active [accounts_you_want_to_save_filename.txt]*
     
         This is the active account names/tokens (usernames, hostnames, group names) exported from AD, ldap, NIS, etc. concatenated into a single, newline-delimited monolithic list. Any tokens (users, hosts, groups) not listed in this list AND not protected by the *patCustomFilter* regex patterns, will be deleted from the sudoers file.
