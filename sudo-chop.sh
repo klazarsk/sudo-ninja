@@ -15,7 +15,7 @@ strVersion="0.9";
 strCopyright="Red Hat, Inc. 2025";
 strAuthor="Kimberly Lazarski";
 ##########################
-# sudo-katana
+# sudo-chop
 #
 # Copyright 2025 Red Hat, Inc.
 #
@@ -65,7 +65,7 @@ cmdTee="true"
 cmdWordVomit="true";
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
-echo "${dtStart8601}: sudo-katana started.";
+echo "${dtStart8601}: sudo-chop started.";
 optQuiet="--quiet";
 optQuiet="-s";
 set +x;
@@ -753,7 +753,7 @@ dtDuration=$(( ${dtFinish} - ${dtStart} ));
 dtDurationMinutes=$(( ${dtDuration} / 60 ));
 dtDurationSeconds=$(( ${dtDuration} % 60 ));
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S")";
-echo -e "\nsudo-katana started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.
+echo -e "\nsudo-chop started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.
 
         #######  #     #  ######         ######   #     #  #     #
         #        ##    #  #     #        #     #  #     #  ##    #

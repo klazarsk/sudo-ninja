@@ -74,5 +74,7 @@ This file you are reading right now.
 
 # Current Status: 
 
-The utility is entering production.
+The utility is entering production but development will be ongoing for some 
+weeks to come. 
+
 

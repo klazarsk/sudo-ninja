@@ -448,7 +448,7 @@ echo -e "
     #     #  #        #     #   #   #    ##        #    #   #     #  #    ##
     ######   #######   #####   ###  #     #        #     #   #####   #     #
 
-${dtStart8601}: sudo-chop started.\n" | ${cmdTee} "${fileLog}" ;
+${dtStart8601}: sudo-cleanup started.\n" | ${cmdTee} "${fileLog}" ;
 
 ##############################
 #
@@ -620,7 +620,7 @@ dtDuration=$(( ${dtFinish} - ${dtStart} )) ;
 dtDurationMinutes=$(( ${dtDuration} / 60 )) ;
 dtDurationSeconds=$(( ${dtDuration} % 60 )) ;
 dtFinish8601="$(date --date="@${dtFinish}" +"%Y-%m-%d_%H:%M:%S")" ;
-echo -e "Processing started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.\n
+echo -e "sudo-cleanup started at ${dtStart8601} and completed at ${dtFinish8601},taking ${dtDurationMinutes}m:${dtDurationSeconds}s.\n
 
         #######  #     #  ######         ######   #     #  #     #
         #        ##    #  #     #        #     #  #     #  ##    #
