@@ -10,7 +10,11 @@
 # Part of Kimberly's sudo-ninja toolkit
 #
 #########################
-#
+# Version and Copyright
+strVersion="0.9";
+strCopyright="Red Hat, Inc. 2025";
+strAuthor="Kimberly Lazarski";
+##########################
 # sudo-katana
 #
 # Copyright 2025 Red Hat, Inc.
@@ -86,80 +90,82 @@ echo -e "
 ${otagBold}Command line:${ctag} ${cmdLine}
 
     ${otagBold} -h | --help${ctag}
-        Display help (this screen)
+      Display help (this screen)
 
     ${otagBold}-C | --check${ctag}
       Validate output file with visudo.
 
     ${otagBold} -D | --debug
-        Debug mode which turns on sleeps, pause breaks waiting for keypress
-        to continue, allowing for review and analysis of intermediate files
+      Debug mode which turns on sleeps, pause breaks waiting for keypress
+      to continue, allowing for review and analysis of intermediate files
 
     ${otagBold} -e | --expire${ctag}
-        Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
-        non-8601 date format driven by client's preexisting data. Utility
-        converts all dates to ISO8601 format for internal processing. We do
-        recommend switching to YYYY-MM-DD format for future EXP tags!
+      Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
+      non-8601 date format driven by client's preexisting data. Utility
+      converts all dates to ISO8601 format for internal processing. We do
+      recommend switching to YYYY-MM-DD format for future EXP tags!
 
     ${otagBold} -f | --flatten${ctag}
-        This flattens multi-line aliases, rules, etc. into single, flat lines
-        for easier processing and pruning of inactive/deleted users, hosts,
-        groups, and orphaned aliases in cases where all member tokens have been
-        removed.
+      This flattens multi-line aliases, rules, etc. into single, flat lines
+      for easier processing and pruning of inactive/deleted users, hosts,
+      groups, and orphaned aliases in cases where all member tokens have been
+      removed.
 
     ${otagBold} -i | --input ${ctag}${otagItal}[filename]${ctag}
-        Input file you want to process
+      Input file you want to process
 
     ${otagBold} -l | --log | --report ${ctag}${otagItal}[Log Filename]${ctag}
-        Specifying logging will capture most output and log most actions
-        to the specified filename. ${otagItal}Partially implemented${ctag}
+      Specifying logging will capture most output and log most actions
+      to the specified filename. ${otagItal}Partially implemented${ctag}
 
     ${otagBold} -m | --monitor${ctag}
-        Monitor tail of ls -lhtr of target directory when appropriate.
-        WARNING! This is VERY slow! Use ONLY for debugging!
-        (not fully implemented/not tested yet)
+      Monitor tail of ls -lhtr of target directory when appropriate.
+      WARNING! This is VERY slow! Use ONLY for debugging!
+      (not fully implemented/not tested yet)
 
     ${otagBold} -M | --nomerge${ctag}
-        Don't merge the comments back in - this is good for
-        further processing of the split files before recombining.
+      Don't merge the comments back in - this is good for
+      further processing of the split files before recombining.
 
     ${otagBold} -n | --nocomment${ctag}
-        Strip out all comments
+      Strip out all comments
 
     ${otagBold} -o | --outputfile ${ctag}${otagItal}[filename]${ctag}
-        outputfile (for recombined sudoers file)
+      outputfile (for recombined sudoers file)
 
     ${otagBold} -O | --overwrite${ctag}
-        Overwrite output file
+      Overwrite output file
 
     ${otagBold} -p | --prefix ${ctag}${otagItal}[PREfix]${ctag}
-
-        PREfix for the split files which are numbered in order the rules are
-        found in --input file. This is for the temp files created in tempdir.
+      PREfix for the split files which are numbered in order the rules are
+      found in --input file. This is for the temp files created in tempdir.
 
     ${otagBold} -r | --recombine${ctag}
-        Merge files back together into a monolithic sudoers file (file path
-        specified by ${otagItal}--outputfile${ctag}).
+      Merge files back together into a monolithic sudoers file (file path
+      specified by ${otagItal}--outputfile${ctag}).
 
     ${otagBold} -s | --split${ctag}
-        disassemble nosudoers into individual files for each comment+rules
-        section for easier processing and flattening of rules
+      disassemble nosudoers into individual files for each comment+rules
+      section for easier processing and flattening of rules
 
     ${otagBold}-S | --syntax${ctag}
       Validate output file with visudo.
 
     ${otagBold} -t | --tempdir ${ctag}${otagItal}[dirname]${ctag}
-        temp directory to place working files  (should ${otagItal}not${ctag} be /tmp!)
+      temp directory to place working files  (should ${otagItal}not${ctag} be /tmp!)
 
     ${otagBold} -v | --verbose${ctag}
-        words and stuff for debugging
+      words and stuff for debugging
 
     ${otagBold} -vv | --verbose11${ctag}
-        extra words and stuff (Word vomit!)
+      extra words and stuff (Word vomit!)
 
     ${otagBold} -vvv | --plaid${ctag}
-        tl;dr (read this output you'll get a headache)
-        Lots and lots of debug output. Too muh. dahling, gobble gobble gobble,
+      tl;dr (read this output you'll get a headache)
+      Lots and lots of debug output. Too muh. dahling, gobble gobble gobble,
+
+    ${otagBold}-v | --version ${ctag}
+      Display the version number
 
 " | less -R
 }
@@ -578,7 +584,10 @@ do
                     cmdWordVomit="echo";
                     unset optQuiet;
                     ;;
-    * )
+        --version ) echo -e "\n\tsudo ninja version ${strVersion}\n\tCopyright ${strCopyright}\n\tAuthor: ${strAuthor}\n"
+                    exit 0;
+                    ;;
+              * )
                     echo -e "${otagRed} \n\tI couldn't understand your command. Please note if you specified an argument with spaces ";
                     echo -e "\t or extended ASCII, you will need to escape those characters and/or use quotes around the path.${ctag}\n";
                     fnHelp;

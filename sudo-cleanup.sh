@@ -16,6 +16,11 @@
 # visudo --check --file as part of its process (not implemented yet).
 #
 #########################
+# Version and Copyright
+strVersion="0.9";
+strCopyright="Red Hat, Inc. 2025";
+strAuthor="Kimberly Lazarski";
+#########################
 #
 #Setting formatting tags
 otagBold="\e[1m";
@@ -32,6 +37,7 @@ chrTab='\t';
 unset optVerbose optCommit;
 eval {optDelete,optVerbose,optReport,optQuiet}=0
 unset optVerbose fileInput dirTemp optFilePrefix optOutputFile dirWorking strStep fileLog arrUserInvalid arrUserValid;
+
 # Initialize these variables for unary expressions:
 eval {optCleanComments,optMonitor,optCsvQuoted,Split,optOverwrite,optRecombine,optFlatten,optLog,optSyntaxCheck}=0;
 
@@ -326,9 +332,11 @@ echo -e "
     ${otagBold}-S | --syntax${ctag}
       Validate output file with visudo.
 
-
     ${otagBold}-v | --verbose ${ctag}
       Word vomit (helpful for debugging)
+
+    ${otagBold}-v | --version ${ctag}
+      Display the version number
 
     ${otagRed}NOTE: If filenames include spaces or extended ASCII characters, DO
     fully escape the filenames with quotes or \\!!${ctag}
@@ -409,6 +417,9 @@ do
                       ;;
     -v | --verbose )  optVerbose="-v";
                       cmdEcho="echo";
+                      ;;
+         --version )  echo -e "\n\tsudo ninja version ${strVersion}\n\tCopyright ${strCopyright}\n\tAuthor: ${strAuthor}\n"
+                      exit 0;
                       ;;
     -r | --rulesdirectory ) shift;
                       dirTemp="${1}";
