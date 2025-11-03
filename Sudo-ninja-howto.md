@@ -54,38 +54,36 @@ this document.
 
 1. The sudoers file 
 
-    For now, don't run this against /etc/sudoers; I like to copy the sudoers 
-    file I am working with, to ~/$directory/nosudoers. In the example for this 
-    document,
-    Xtool's ASCT-1000
-    I am working with a file called nosudoers-east-paredmore.  
+For now, don't run this against /etc/sudoers; I like to copy the sudoers 
+file I am working with, to ~/$directory/nosudoers. In the example for this 
+I am working with a file called nosudoers-east-paredmore.  
 
 1. A complete account list
 
-    The tool makes no distinction betwene user, group, and host accounts/aliases.
-    What you want to do for pruning invalid accounts, is to concatenate all of 
-    the active users, hosts, and groups into a SINGLE list, one account per line,
-    strictly the account (login) name.
+The tool makes no distinction betwene user, group, and host accounts/aliases.
+What you want to do for pruning invalid accounts, is to concatenate all of 
+the active users, hosts, and groups into a SINGLE list, one account per line,
+strictly the account (login) name.
 
 1.  Sudo Ninja
 
-    The respository may be found at: 
-    [https://github.com/klazarsk/sudo-ninja/](https://github.com/klazarsk/sudo-ninja/)
+The respository may be found at: 
+[https://github.com/klazarsk/sudo-ninja/](https://github.com/klazarsk/sudo-ninja/)
 
     
 # Installation
 
 1. Ensure git is installed
 
-    ```
-    $ sudo dnf -y install git
-    ```
+----
+$ sudo dnf -y install git
+----
 
 1. Open a terminal prompt and change to the directory where you want to clone sudo-ninja to
 
-    ---
-    $ cd ~/Download
-    ---
+---
+$ cd ~/Download
+---
 
 1. Open the repository in a web browser ([https://github.com/klazarsk/sudo-ninja/](https://github.com/klazarsk/sudo-ninja/)
 
@@ -94,27 +92,27 @@ under the "Clone" tab in the dropmenu, select https and then copy the url
 ![select the URL, or click the "copy" linkbutton](images/github-clone-https.png)
 
 1. Back to the terminal, clone the repository to your current working directory:  
-    ```
-    $ git clone git@github.com:klazarsk/sudo-ninja.git
-    ```
+----
+$ git clone git@github.com:klazarsk/sudo-ninja.git
+----
 
 1. Copy the utilities to a directory in your PATH (optionally add ~/bin to your
-   PATH variable):  
-    ```
-    $ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
-    ```
+PATH variable):  
+----
+$ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
+----
 
 1. Set the execute permission bit on the files  
-    ```
-    $ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
-    ```
+----
+$ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
+----
 
 1. Verify the utilities are accessible by trying to run the help screens:  
-    ```
-    $ sudo-chop.sh --help 
-    $ sudo-chop.sh --help 
-    ```
-    
+----
+$ sudo-chop.sh --help 
+$ sudo-chop.sh --help 
+----
+
     
 # Features
 
@@ -208,15 +206,15 @@ For the example in this document:
 
 1. Create the target (working) directory rules-east-paredmore: 
 
-    ```
+    ----
     $ mkdir rules-east-paredmore
-    ```
+    ----
 
 1. Let's issue a `sudo-chop` command to process a monolithic sudoers file `nosudoers-east-paredmore`, to ask it to flatten rules and split the file, placing the split files using a of `sudo` in subdirectory `rules-east-paredmore`. We're also going to instruct the utility to prune expired (anything aged older than $(today - 1 day)) rules, and to recombine the split files into output monolithic sudoers file `recombined-east-paredmore`.  
 
-    ```
+    ----
     $ sudo-chop.sh  --input nosudoers-east-paredmore --prefix sudo --targetdir rules-east-paredmore --flatten --split  --outputfile recombined-east-paredmore --expire  --recombine --log logfile.txt
-    ```
+    ----
 
     > info:
     > make sure you have the combined active account list (one account per line) 
@@ -234,7 +232,7 @@ For the example in this document:
     just placeholders to show you where to start inserting your own custom
     patterns)
 
-    ```
+    ----
     #########################
     #
     # This is a customizable word filter, to filter out words that our initial
@@ -247,7 +245,7 @@ For the example in this document:
 
     #
     #########################
-    ```
+    ----
     
     In environments where you are managing multiple monolithic sudoers file, such
     as an EU vs. US or east vs. west sudoers file, consider leveraging config 
@@ -258,12 +256,12 @@ For the example in this document:
     
     In this case you would pleace the patCustomFilter{,2} in a file, such as:
     
-    ```
+    ----
     [user@host workingdir]# cat /etc/sudo-ninja-east.config
     patCustomFilter='apache|root|zoomadmin|oracle|vigadmin|tibadmin|sysadmin|dmadmin|docadmin|nagios|noc|netlog-mgr|vigadmin|_CISSYS|-cert-db|ALL|patternfoo|patternbar|pattern-etc'
     patCustomFilter2='pattern1|pattern2|etc'
     [user@host workingdir]# 
-    ```
+    ----
     
     
 
@@ -271,9 +269,9 @@ For the example in this document:
 
 
 
-    ```
+    ----
     $ sudo-cleanup --input recombined-east-paredmore --tempdir rules-east-paredmore --batchdelete --active active_account_list.sorted --orphaned --log sudo-ninja.log --commit --syntax --userdelete foouser1234
-    ```
+    ----
 
 
 
@@ -302,9 +300,9 @@ For the example in this document:
         
         In other words, and alias that is left behind like this after deletion: 
         
-    ```
+    ----
     Host_Alias fooalias  = 
-    ```
+    ----
         
         When these "orphaned" aliases are left in place, what results is a sudoers syntax error, which in turn prevents any user in that sudoers file from being able to escalate prileges, basically logging all administrative users apart from the actual root login, which in production is usually disallowed from logging in via ssh via password authentication. So, we inluded a feature to enable orphaned alias detection and deletion.
         
@@ -331,8 +329,8 @@ Now, open recombined-east-paredmore and review the finalized sudoers file!
 > It may be helpful to create a flattened, un-pruned nosudoers file for diffing 
 purposes. For this example, we will create recombined-east-paredmore-unpruned:
 
-```
+----
 $ sudo-chop.sh --recombine --input nosudoers-east-paredmore --outputfile recombined-east-paredmore-unpruned --prefix sudo --targetdir rules-east-paredmore --flatten --split 
-```
+----
 
 
