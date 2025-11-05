@@ -263,6 +263,12 @@ echo -e "
       patCustomFilter='apache|root|oracle|mysql|sysadmin|dmadmin|docadmin|nagios|noc|patternfoo|patternbar|pattern-etc';
       patCustomFilter2='pattern1|pattern2|etc';
 
+      ${otagBold}--commit${ctag}
+
+      This option instructs the utility to commit user deletions to the original
+      sudoers file. Need to roll back? Not to worrry; your input sudoers file has
+      been backed up to [sudoersfile].YYYY-MM-DD_HHMM!!
+
 
     ${otagBold}-b | --batchdelete${ctag}
 
@@ -305,11 +311,6 @@ echo -e "
       Delete orphaned Aliases. In other words, if an alias is left with no tokens
       or only one token to the left of the equals (=) sign, the alias is orphaned
       and will be deleted.
-
-    ${otagBold}-q | --quoted${ctag}
-      Use this option if the CSV fields contain commas;
-      this will cause the utility to expect quoted fields.
-      (NOT YET IMPLEMENTED)
 
     ${otagBold}-r | --rulesdirectory ${ctag}${otagItal}[directory]${ctag}
       This is the directory path where inactive rule files arekeypress

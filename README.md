@@ -25,12 +25,16 @@ a read-only utility designed for reporting.
 Now that this utility is about to enter production the utilities have been
 renamed according to purpose and role. 
 
-# sudo-chop
+# sudo-chop.sh
 
 Not this file.
 
 Chops, slices, dices, splits, and reassembles sudoer files, and flattens multiline 
 sudoer rules, and also removes expired rules. 
+
+This utility takes multiline sudoers aliases and rules and flattens them, splits
+the file into shunks for further processing by sudo-cleanup, and deletes 
+expired rules, and leverages visudo to verify syntactic integrity of the file.
 
 # sudo-cleanup.sh
 
@@ -38,20 +42,41 @@ Also not this file. ;)
 
 Seeks, relocates, destroys. 
 
+This utility can delete an individual user or batch delete users by comparing 
+against an active account list. It can also strip comments from a sudoers file 
+and will also clean up any orphaned aliases or rules, and leverages visudo to 
+verify syntactic integrity of the file. 
+
+# README.md
+
+This file you are reading right now. ;)
+
 # Roadmap / Coming features
 
---expirenewer YYYY-MM-DD 
+**--expirenewer** _YYYY-MM-DD_ 
 
-This will define the earliest date 
+This will define the earliest date that the utility will reap -- this is 
+to help organizations with very old, unmaintained monolithic sudoers file, from
+inadvertently deleting contractors who have been hired on as permanent employees,
+or deleting long-term contractors who are still on board.
+
+**--expireolder** _YYYY-MM-DD_
 
 Currently the utility is expecting an EXP YYYY-MM-DD string in a comment preceding
 the block of rules that the expiration applies to. --expire would ideally accept
 a string so that the tag could be "Expire" or "END" or whatever locale-specific
 language you choose to use to precede the expiry date. 
 
+**--expire** _EXPIRATION_TAG_
+
+Currently **--expire** assumes expiration tags are indicated by the string "EXP"
+followed by a date (e.g., "EXP 2025-11-15"). If no argument to **--expire** is
+provided, the tool will use "EXP" as the default,
+
+
 Man pages and RPM will be coming by the end of the year.
 
-## About my coding style 
+## About Coding style 
 
 I tend to append semicolons to the end of each line - with my history as a release
 engineer it was habit, and also many of my utilities started out as one-liners, and
@@ -70,10 +95,6 @@ it.
 
 Also: I_LOATHE_ALL_CAPS_CONSTANTS_OR_VARIABLES_BECAUSE_WHY_ARE_WE_YELLING?
 
-
-# README.md
-
-This file you are reading right now. 
 
 
 # Current Status: 
