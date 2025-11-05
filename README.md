@@ -40,8 +40,9 @@ Seeks, relocates, destroys.
 
 # Roadmap / Coming features
 
---newerthan and --olderthan for start and end date ranges for expired rules deletion
---expire will accept a tag definition 
+--expirenewer YYYY-MM-DD 
+
+This will define the earliest date 
 
 Currently the utility is expecting an EXP YYYY-MM-DD string in a comment preceding
 the block of rules that the expiration applies to. --expire would ideally accept

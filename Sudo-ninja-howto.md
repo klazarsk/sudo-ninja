@@ -14,7 +14,7 @@ unit and integration testing, but not yet production-ready.
 This tool suite was started, inspired by a client seeking to reduce technical
 debt, but they weren't quite ready to move to IDM so we created this utility to 
 help them bridge the gap.
-
+ 
 Even once we achieve feature-completeness and a stable build, some analysis and
 configuration of filters will be essential, as the default configuration is 
 not one size fits all and will vary from environment to environment.
@@ -54,9 +54,7 @@ this document.
 
 1. The sudoers file 
 
-For now, don't run this against /etc/sudoers; I like to copy the sudoers 
-file I am working with, to ~/$directory/nosudoers. In the example for this 
-I am working with a file called nosudoers-east-paredmore.  
+Until the tool is validated in your environment and any token preservation patterns added to patCustomFilter/patCustomFilter2, don't run this against /etc/sudoers.; I copy the sudoers file I am working with, to ~/$directory/nosudoers. In this example I am working with a file called nosudoers-east-paredmore.  
 
 1. A complete account list
 
