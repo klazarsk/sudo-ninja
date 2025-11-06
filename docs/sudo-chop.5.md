@@ -143,7 +143,7 @@ $ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
 
 ```
 $ sudo-chop.sh --help
-$ sudo-chop.sh --help
+$ sudo-cleanup.sh --help
 ```
 
 ## EXAMPLES

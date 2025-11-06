@@ -179,7 +179,7 @@ $ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
 2. Verify the utilities are accessible by trying to run the help screens:
 
 ```
-$ sudo-chop.sh --help
+$ sudo-cleanup.sh --help
 $ sudo-chop.sh --help
 ```
 
