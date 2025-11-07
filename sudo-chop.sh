@@ -65,10 +65,13 @@ cmdTee="true"
 cmdWordVomit="true";
 dtStart="$(date +"%s")";
 dtStart8601="$(date --date="@${dtStart}" +"%Y-%m-%d_%H:%M:%S")";
+dtEpoch="1970-01-01";
 echo "${dtStart8601}: sudo-chop started.";
 optQuiet="--quiet";
 optQuiet="-s";
 set +x;
+rexIso9660="^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+dtEpochStart=$(date -d "1970-01-01" +%s)
 #
 ##############################
 # Ensure utilities we rely upon are present
@@ -86,8 +89,16 @@ done;
 
 fnHelp() {
 
+if [ ! -z "${strError}" ] ;
+then
+  echo -e "${otagRed}${strError}${ctag}\n";
+  echo -e "${otagBold}Command line:${ctag} ${cmdLine}";
+  read -n 1 -s -r -p "Press any key to continue...";
+fi;
+
 echo -e "
-${otagBold}Command line:${ctag} ${cmdLine}
+
+sudo-chop help
 
     ${otagBold} -h | --help${ctag}
       Display help (this screen)
@@ -104,6 +115,20 @@ ${otagBold}Command line:${ctag} ${cmdLine}
       non-8601 date format driven by client's preexisting data. Utility
       converts all dates to ISO8601 format for internal processing. We do
       recommend switching to YYYY-MM-DD format for future EXP tags!
+
+    ${otagBold} --expirenewer ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
+
+      Expire rules which are NEWER than the specified date, but older than
+      today's date $(date +"%Y-%m-%d").
+
+      The date MUST be specified in ISO8601 format (YYYY-MM-DD).
+
+    ${otagBold} --expireolder ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
+
+      Expire rules which are OLDER than the specified date. The tool does not
+      accept dates that are prior to the start of UNIX Epoch (1970-01-01).
+
+      The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
     ${otagBold} -f | --flatten${ctag}
       This flattens multi-line aliases, rules, etc. into single, flat lines
@@ -165,9 +190,16 @@ ${otagBold}Command line:${ctag} ${cmdLine}
       Lots and lots of debug output. Too muh. dahling, gobble gobble gobble,
 
     ${otagBold}-v | --version ${ctag}
-      Display the version number
+      Display the version number and copyright information.
 
-" | less -R
+" | less -R;
+
+  if [ -z  "${strError}" ];
+  then
+    exit 0;
+  else
+    exit 1;
+  fi;
 }
 
 function fnSpinner() {
@@ -301,7 +333,7 @@ function fnSplitExpirations () {
   for curFile in "${arrFiles[@]}";
   do
     ((intCounter+=1));
-    strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))% complete; processing ${curFile}.";
+    strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))%; processing ${curFile}.";
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
     if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
     then
@@ -309,14 +341,14 @@ function fnSplitExpirations () {
       mv ${optVerbose} "${curFile}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
       ((intRenumber++));
     else
-      echo -en "\x1b[2K\rMore than two EXP tags found in ${curFile}, processing...";
+      echo -en "\x1b[2K\rMore than two EXP tags found in ${curFile}, processing...\r";
       ${cmdLog} "More than two EXP tags found in ${curFile}, processing...";
       IFS='\0';
       sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
       unset IFS;
       for fileCorrection in $(find "${dirTemp}" -name "${optFilePrefix}*.tmp-correction" | sort -V);
       do
-        ${cmdWordVomit} "$(${cmdDate}) Multiple expiration tags in ${curFile}. Correcting."; sleep .3;
+        ${cmdWordVomit} "$(${cmdDate}) Multiple expiration tags in ${curFile}. Correcting."; sleep .1;
         [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
         mv ${optVerbose} "${fileCorrection}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
         ((intRenumber++));
@@ -347,11 +379,35 @@ function fnRmExpiredRules() {
     then
       curExpDate=$(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g');
 
-      if [[ "${curExpDate}" < "${dtToday}" ]];
+      if [ -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
-        arrExpiredRules+=("${curFile}");
-      fi;
-
+        if [[ "${curExpDate}" < "${dtToday}" ]];
+        then
+          echo -e "\n${curExpDate} < ${dtToday}"
+          arrExpiredRules+=("${curFile}");
+        fi;
+      elif [ ! -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
+      then
+        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtExpireOlder}" ]];
+        then
+          echo -e "\n${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtExpireOlder}"
+          arrExpiredRules+=("${curFile}");
+        fi;
+      elif [ ! -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
+      then
+        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtToday}" ]];
+        then
+          echo -e "\n${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtToday}"
+          arrExpiredRules+=("${curFile}");
+        fi;
+      elif [ -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
+      then
+        if [[ "${curExpDate}" < "${dtExpireOlder}" ]];
+        then
+          echo -e "\n${curExpDate} < ${dtExpireOlder}"
+          arrExpiredRules+=("${curFile}");
+        fi;
+      fi
     fi;
   done
 
@@ -532,8 +588,54 @@ do
                     cmdDbgRead="read";
                     cmdDbgSleep="sleep";
                     cmdDbgEcho="echo";
-                   ;;
-    -e | --expire)  optExpire="1";
+                    ;;
+    -e | --expire ) optExpire="1";
+                    ;;
+    --expirenewer ) shift;
+                    dtExpireNewer="$1"
+                          if ! [[ "${dtExpireNewer}" =~ ${rexIso9660} ]];
+                          then
+                              strError="--expirenewer error: ${dtExpireNewer} is not in the correct YYYY-MM-DD format."
+                              return 1
+                          fi
+                          # 2. Check if it is a real, valid date (e.g., Feb 31 is invalid)
+                        # Use 'date -d' and check its exit status. Redirect output to /dev/null
+                          if ! date -d "${dtExpireNewer}" >/dev/null 2>&1;
+                          then
+                              strError="--expireNewer error: ${dtExpireNewer} is an ISO9660-format date string but an invalid date value (e.g., Feb 31).";
+                              fnHelp;
+                          fi
+                          # 3. Check if the date is on or after the Unix epoch (1970-01-01)
+                          # Convert dates to epoch seconds (%s) for numeric comparison
+
+
+                          if [[ "${dtExpireNewer}" -lt "${dtEpoch}" ]];
+                          then
+                              strError="--expirenewer error: ${dtExpireNewer} is before the Unix epoch (1970-01-01)."
+                              fnHelp;
+                          fi
+                    ;;
+    --expireolder ) shift;
+                    dtExpireOlder="$1";
+                          if ! [[ "${dtExpireOlder}" =~ ${rexIso9660} ]];
+                          then
+                              strError="--expireolder error: ${dtExpireOlder} is not in the correct YYYY-MM-DD format.";
+                              fnHelp;
+                          fi
+
+                          # 2. Check if it is a real, valid date (e.g., Feb 31 is invalid)
+                          # Use 'date -d' and check its exit status. Redirect output to /dev/null
+                          if ! date -d ${dtExpireOlder} >/dev/null 2>&1;
+                          then
+                              strError="--expireolder error: ${dtExpireOlder} is an ISO9660-format date string but an invalid date value (e.g., Feb 31).";
+                              fnHelp;
+                          fi
+
+                          if [[ "${dtExpireOlder}" -lt "${dtEpoch}" ]];
+                          then
+                              strError="--expireolder error:  ${dtExpireOlder} is before the Unix epoch (1970-01-01)."
+                              fnHelp;
+                          fi
                     ;;
     -f | --flatten ) optFlatten=1;
                     ;;
@@ -584,7 +686,7 @@ do
                     cmdWordVomit="echo";
                     unset optQuiet;
                     ;;
-        --version ) echo -e "\n\tsudo ninja version ${strVersion}\n\tCopyright ${strCopyright}\n\tAuthor: ${strAuthor}\n"
+        --version ) echo -e "\n\tsudo ninja version ${strVersion}\n\tCopyright ${strCopyright}\n\tAuthor: ${strAuthor}\n\tLicense: GLPv3.0\n"
                     exit 0;
                     ;;
               * )
@@ -596,6 +698,15 @@ do
   esac ;
   shift ;
 done;
+
+if [ -n "${dtExpireNewer}" ] && [ -n "${dtExpireOlder}" ] ;
+then
+  if [[ "${dtExpireNewer}" -gt  "${dtExpireOlder}" ]] ;
+  then
+    strError="--expirenewer ${dtExpireNewer} must be earlier than --expireolder ${dtExpireOlder}."
+    fnHelp
+  fi
+fi
 
 echo -e "
 ################################################################################
