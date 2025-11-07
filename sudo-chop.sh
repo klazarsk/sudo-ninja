@@ -119,14 +119,16 @@ sudo-chop help
     ${otagBold} --expirenewer ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
 
       Expire rules which are NEWER than the specified date, but older than
-      today's date $(date +"%Y-%m-%d").
+      today's date $(date +"%Y-%m-%d"). This option requires the --expire
+      option.
 
       The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
     ${otagBold} --expireolder ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
 
       Expire rules which are OLDER than the specified date. The tool does not
-      accept dates that are prior to the start of UNIX Epoch (1970-01-01).
+      accept dates that are prior to the start of UNIX Epoch (1970-01-01). This
+      option requires the --expire option.
 
       The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 

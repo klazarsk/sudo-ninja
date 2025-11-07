@@ -45,14 +45,15 @@ being to check syntax.
 **--expirenewer** _[YYYY-MM-DD]_
 
   Expire rules which are NEWER than the specified date, but older than
-  today's date $(date +"%Y-%m-%d").
+  today's date $(date +"%Y-%m-%d").This option requires the --expire option.
 
   The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
 **--expireolder** _[YYYY-MM-DD]_
 
   Expire rules which are OLDER than the specified date. The tool does not
-  accept dates that are prior to the start of UNIX Epoch (1970-01-01).
+  accept dates that are prior to the start of UNIX Epoch (1970-01-01). This 
+  option requires the --expire option.
 
   The date MUST be specified in ISO8601 format (YYYY-MM-DD).
   
