@@ -404,7 +404,7 @@ function fnRmExpiredRules() {
         fi;
       elif [ -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" < "${dtExpireOlder}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtExpireOlder}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
@@ -703,9 +703,9 @@ done;
 
 if [ -n "${dtExpireNewer}" ] && [ -n "${dtExpireOlder}" ] ;
 then
-  if [[ "${dtExpireNewer}" -gt  "${dtExpireOlder}" ]] ;
+  if [[ "$(date -d "${dtExpireNewer}" +%s)" -gt  "$(date -d ${dtExpireOlder} +%s)" ]] ;
   then
-    strError="--expirenewer ${dtExpireNewer} must be earlier than --expireolder ${dtExpireOlder}."
+    strError="$LINENO --expirenewer ${dtExpireNewer} must be earlier than --expireolder ${dtExpireOlder}."
     fnHelp
   fi
 fi
