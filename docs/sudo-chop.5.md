@@ -42,6 +42,20 @@ being to check syntax.
   converts all dates to ISO8601 format for internal processing. We do
   recommend switching to YYYY-MM-DD format for future EXP tags!
 
+**--expirenewer** _[YYYY-MM-DD]_
+
+  Expire rules which are NEWER than the specified date, but older than
+  today's date $(date +"%Y-%m-%d").
+
+  The date MUST be specified in ISO8601 format (YYYY-MM-DD).
+
+**--expireolder** _[YYYY-MM-DD]_
+
+  Expire rules which are OLDER than the specified date. The tool does not
+  accept dates that are prior to the start of UNIX Epoch (1970-01-01).
+
+  The date MUST be specified in ISO8601 format (YYYY-MM-DD).
+  
 **-f | --flatten**
   This flattens multi-line aliases, rules, etc. into single, flat lines
   for easier processing and pruning of inactive/deleted users, hosts,
