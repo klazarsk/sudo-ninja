@@ -541,8 +541,6 @@ then
 fi
 
 
-
-
 intTableColumns=$(echo "$(tput cols) / 20 " | bc);
 
 if [ -f "${fileSudoers}" ] && [ -n "${fileActiveUsers}" ];

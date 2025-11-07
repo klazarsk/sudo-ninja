@@ -383,21 +383,21 @@ function fnRmExpiredRules() {
 
       if [ -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" < "${dtToday}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtToday}" +%s)" ]];
         then
           ${cmdEcho}  =-e "\n${curFile}: ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtExpireOlder}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" > "$(date -d "${dtExpireNewer}" +%s)" && "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtExpireOlder}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtToday}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" > "$(date -d "${dtExpireNewer}" +%s)" && "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtToday}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
