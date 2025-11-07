@@ -53,15 +53,6 @@ This file you are reading right now. ;)
 
 # Roadmap / Coming features
 
-**--expirenewer** _YYYY-MM-DD_ 
-
-This will define the earliest date that the utility will reap -- this is 
-to help organizations with very old, unmaintained monolithic sudoers file, from
-inadvertently deleting contractors who have been hired on as permanent employees,
-or deleting long-term contractors who are still on board.
-
-**--expireolder** _YYYY-MM-DD_
-
 Currently the utility is expecting an EXP YYYY-MM-DD string in a comment preceding
 the block of rules that the expiration applies to. --expire would ideally accept
 a string so that the tag could be "Expire" or "END" or whatever locale-specific
