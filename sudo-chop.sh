@@ -212,7 +212,7 @@ function fnSpinner() {
     then
       gfxSpin="/";
     fi;
-    echo -en "\x1b[2K\r\e[1;91m $(date +"%H:%M:%S")>\e[1;93m ${gfxSpin} ${ctag} ${otagBold}\e[1;92m${strStep}${ctag}\r";
+    echo -en "\x1b[2K\r\e[1;91m $(date +"%H:%M:%S")>\e[1;93m ${gfxSpin} ${ctag}${otagBold}\e[1;92m${strStep}${ctag}\r";
     case "${gfxSpin}" in
       "/" ) gfxSpin="-";
         ;;
@@ -383,28 +383,28 @@ function fnRmExpiredRules() {
       then
         if [[ "${curExpDate}" < "${dtToday}" ]];
         then
-          echo -e "\n${curExpDate} < ${dtToday}"
+          ${cmdEcho}  =-e "\n${curFile}: ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
         if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtExpireOlder}" ]];
         then
-          echo -e "\n${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtExpireOlder}"
+          ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
         if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtToday}" ]];
         then
-          echo -e "\n${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtToday}"
+          ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
         if [[ "${curExpDate}" < "${dtExpireOlder}" ]];
         then
-          echo -e "\n${curExpDate} < ${dtExpireOlder}"
+          ${cmdEcho} -e "\n${curFile}: ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
         fi;
       fi
@@ -428,9 +428,9 @@ function fnRmExpiredRules() {
     for curFile in ${arrExpiredRules[@]};
     do
       strStep="[${curFile}], expiration date $(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g').";
-      echo -e "\n -------------------------------------------------------------------------------\n${strStep}\n" | tee -a "${fileLog}";
       cat "${curFile}" >> "${fileLog}"
     done;
+    echo -e "-------------------------------------------------------------------------------" | tee -a "${fileLog}";
   fi;
 
   for curFile in ${arrExpiredRules[@]};
