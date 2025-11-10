@@ -53,18 +53,6 @@ This file you are reading right now. ;)
 
 # Roadmap / Coming features
 
-Currently the utility is expecting an EXP YYYY-MM-DD string in a comment preceding
-the block of rules that the expiration applies to. --expire would ideally accept
-a string so that the tag could be "Expire" or "END" or whatever locale-specific
-language you choose to use to precede the expiry date. 
-
-**--expire** _EXPIRATION_TAG_
-
-Currently **--expire** assumes expiration tags are indicated by the string "EXP"
-followed by a date (e.g., "EXP 2025-11-15"). If no argument to **--expire** is
-provided, the tool will use "EXP" as the default,
-
-
 Man pages and RPM will be coming by the end of the year.
 
 ## About Coding style 
