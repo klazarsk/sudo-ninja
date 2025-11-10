@@ -11,7 +11,7 @@
 #
 #########################
 # Version and Copyright
-strVersion="0.9";
+strVersion="1.0";
 strCopyright="Red Hat, Inc. 2025";
 strAuthor="Kimberly Lazarski";
 ##########################
@@ -110,18 +110,17 @@ sudo-chop help
       Debug mode which turns on sleeps, pause breaks waiting for keypress
       to continue, allowing for review and analysis of intermediate files
 
-    ${otagBold} -e | --expire${ctag} ${otagItal}[Custom Expiration Tag]${ctag}
+    ${otagBold} -e | --expire${ctag} ${otagItal}[CustomTag]${ctag}
       Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
       non-8601 date format driven by client's preexisting data. Utility
       converts all dates to ISO8601 format for internal processing. We do
       recommend switching to YYYY-MM-DD format for future EXP tags!
 
-      --expire accepts a custom expiration tag; if no tag is specified, the tool
-      defaults to EXP. If your custom expiration tag contains any spaces or
-      special characters, enclose the tag with spaces.
+      The ${otagBold}--expire${ctag} accepts a custom expiration tag; if no tag
+      is specified, the tool defaults to EXP. If your custom expiration tag
+      contains any spaces or special characters, enclose the tag with spaces.
 
     ${otagBold} --expirenewer ${ctag}${otagItal}YYYY-MM-DD${ctag}
-
       Expire rules which are NEWER than the specified date, but older than
       today's date $(date +"%Y-%m-%d"). This option requires the --expire
       option.
@@ -129,7 +128,6 @@ sudo-chop help
       The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
     ${otagBold} --expireolder ${ctag}${otagItal}YYYY-MM-DD${ctag}
-
       Expire rules which are OLDER than the specified date. The tool does not
       accept dates that are prior to the start of UNIX Epoch (1970-01-01). This
       option requires the --expire option.
@@ -341,7 +339,8 @@ function fnSplitExpirations () {
     ((intCounter+=1));
     strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))%; processing ${curFile}.";
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
-    if [ $(grep -c "${strExpire}" "${curFile}") -le 1 ] ;
+    ${cmdDbgEcho} -e "\nstrExpire: [${strExpire}] ; curFile: [${curFile}]\n";
+    if [[ "$(grep -c "${strExpire}" "${curFile}")" -le 1 ]];
     then
       ${cmdWordVomit} "Zero or only one expiration tag in ${curFile}, processing...\n";
       mv ${optVerbose} "${curFile}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
@@ -599,13 +598,14 @@ do
                     argBackup=("$@");
                     shift;
                     strExpire="${1}"
-                    rexExpire='-.*'
-                    if [[ "${strExpire}" =~ "${rexExpire}" ]];
+                    rexExpire='\-.*'
+                    if [[ "${strExpire}" =~ ${rexExpire} ]];
                     then
                       echo "No expiration tag supplied; defaulting to EXP.";
                       strExpire="EXP";
                       set -- "${argBackup[@]}";
                     fi;
+                    unset argBackup rexExpire;
                     ;;
     --expirenewer ) shift;
                     dtExpireNewer="$1"
@@ -814,7 +814,7 @@ then
   fi;
 
   strStep="Flattening ${fileInput} ";
-  echo -e "\nLINE ${LINENO} : $(${cmdDate}) : ${strStep}...";
+  ${cmdDbgEcho} -e "\nLINE ${LINENO} : $(${cmdDate}) : ${strStep}...";
 
   ${cmdDbgEcho} -e "\n\n${LINENO}:About to start the flatten step!";
   ${cmdDbgRead} -n 1 -s -r -p "${LINENO}:Press any key to continue...";

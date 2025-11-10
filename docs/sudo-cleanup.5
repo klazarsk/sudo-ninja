@@ -2,170 +2,157 @@
 .TH sudo-chop.sh 5 "November 2025" sudo-chop.sh "User Manual"
 .SH NAME
 sudo-cleanup.sh - Sudo ninja sudoers invalid users deletion and sudoers file
-cleanup utility.
+  cleanup utility.
 
 .SH SYNOPSIS
 \fBsudo-cleanup.sh --sudoersfile\fP _monolithic_sudoers\fIfile\fP \fB--active\fP \\
-_active_account\fIlist\fP  \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
-\fB--commit --syntax --config\fP \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
+  _active_account\fIlist\fP  \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
+  \fB--commit --syntax --config\fP \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
 
 .SH DESCRIPTION
 \fBsudo-cleanup\fP is part of the sudo-ninja suite; this utility takes a mono-
-lithic sudoers file preprocessed with sudo-chop, parses out all account (user,
-group, and host) names, compares them to an active user list, and then deletes
-the users who are not present in the file. The utility can then optionally also
-clean up orphaned aliases and rules and remove comments which do not contain
-date strings, and then check the syntax.
+  lithic sudoers file preprocessed with sudo-chop, parses out all account (user,
+  group, and host) names, compares them to an active user list, and then deletes
+  the users who are not present in the file. The utility can then optionally
+  also clean up orphaned aliases and rules and remove comments which do not
+  contain date strings, and then check the syntax.
 
 .PP
 The user may define "token preservation" regular expression patterns to protect
-known accounts which are present in the sudoers file, but are not included in
-the account list exported from the active directory, openldap, NIS, etc.
-federated authentication platform. There are sample patterns included in the
-utility which are applied by default, or if you require a custom account list
-to protect, and have a single version monolithic sudoers file version to manage,
-you may place the token preservation patterns in /etc/sudo-ninja.conf, or if you
-maintain multiple, per-environment sudoers files, you may specify a custom
-configuration file using the \fB--config\fP _token_preservation\fIfile\fP option.
+  known accounts which are present in the sudoers file, but are not included in
+  the account list exported from the active directory, openldap, NIS, etc.
+  federated authentication platform. There are sample patterns included in the
+  utility which are applied by default, or if you require a custom account list
+  to protect, and have a single version monolithic sudoers file version to
+  manage, you may place the token preservation patterns in /etc/sudo-ninja.conf,
+  or if you maintain multiple, per-environment sudoers files, you may specify a
+  custom   configuration file using the \fB--config\fP _token_preservation\fIfile\fP
+  option.
 
 .SH OPTIONS
-\fB-h | --help$\fP
-
-.PP
-Display this screen
+\fB-h | --help\fP
+  Display this screen
 
 .PP
 \fB-a | --active\fP \fIActiveDirectoryUserList\fP
-
-.PP
-The file containing the list of words for the search spec (words to find)
-
-.PP
-For now, this is a single, monolithic list of accounts to be preserved; to
-create the file, concactenate a list of user account names, hostnames,
-and group names from your Active Directory or LDAP directory, and concat-
-enate them together to create one monolithic list.
+  The file containing the list of words for the search spec (words to find)
+  .
+  For now, this is a single, monolithic list of accounts to be preserved; to
+  create the file, concactenate a list of user account names, hostnames,
+  and group names from your Active Directory or LDAP directory, and concat-
+  enate them together to create one monolithic list.
 
 .PP
 \fB-c | --cleancomments\fP
-
-.PP
-Process comments as well
+  Process comments as well
 
 .PP
 \fB-C | --config\fP  \fI[configfile]\fP
-
-.PP
-Load a custom config file containing patCustomFilter and patCustomFilter2
-variable assignments. If this option is not specified, then
-
-.PP
-These should contain regular expressions, with each
-expression pipe ( | ) delimited. Example:
+  Load a custom config file containing patCustomFilter and patCustomFilter2
+.br
+  variable assignments. If this option is not specified, then the utility will
+.br
+  first check /etc/sudo-ninja.conf for these patterns, and then it will fall back
+  to defaulting to the patterns hard-coded within the script.
+  .
+  These should contain regular expressions, with each expression pipe ( | )
+.br
+  delimited. Example:
 
 .EX
-patCustomFilter='apache|root|oracle|mysql|sysadmin|dmadmin|docadmin|nagios|noc|patternfoo|patternbar|pattern-etc';
-patCustomFilter2='pattern1|pattern2|etc';
+  patCustomFilter='apache|root|oracle|mysql|sysadmin|dmadmin|docadmin|nagios|noc|patternfoo|patternbar|pattern-etc';
+  patCustomFilter2='pattern1|pattern2|etc';
 .EE
 
 .PP
 \fB--commit\fP
-
-.PP
-This option instructs the utility to commit user deletions to the original
-sudoers file. Need to roll back? Not to worrry; your input sudoers file has
-been backed up to [sudoersfile].YYYY-MM-DD_HHMM!!
+  This option instructs the utility to commit user deletions to the original
+  sudoers file. Need to roll back? Not to worrry; your input sudoers file has
+  been backed up to [sudoersfile].YYYY-MM-DD_HHMM!!
 
 .PP
 \fB-b | --batchdelete\fP
-
-.PP
-Batch delete accounts that are not present in the \fB--active\fP account list,
-unless they're present in the patCustomFilter variables for preservation
-regardless of whether they are in the user list from your federated
-authentication list. This will work directly against --sudoersfile.
+  Batch delete accounts that are not present in the \fB--active\fP account list,
+  unless they're present in the patCustomFilter variables for preservation
+  regardless of whether they are in the user list from your federated
+  authentication list. This will work directly against --sudoersfile.
 
 .PP
 \fB-d | --deleteuser\fP \fIusername\fP
-
-.PP
-To manually specify a single user; this is useful for scripting and one-
-off user deletions (good for day-to-day maintenance when only a small
-handful of users is deleted).
+  To manually specify a single user; this is useful for scripting and one-
+  off user deletions (good for day-to-day maintenance when only a small
+  handful of users is deleted).
 
 .PP
 \fB-D | --debug\fP
-
-.PP
-Debug mode which turns on sleeps, pause breaks waiting for keypress
+  Debug mode which turns on sleeps, pause breaks waiting for keypress
   to continue, allowing for review and analysis of intermediate files
 
 .PP
 \fB-f | --filespec\fP \fI[filespec]\fP
-This is the filespec of the numbered sudoers files you wish to
-analyze and process.
-
-.PP
-This assumes that you've \fB--split\fP the sudoers file for processing
-using sudoers-util. Only the prefix of the file needs to be specified;
-do not specify a wildard.
-
-.PP
-Example: \fB--filespec\fP \fInosudoers\fP
-
-.PP
-Split files will be generated as \\${dirTemp}/\\${strFileSpec}0,
-\\${dirTemp}/\\${strFileSpec}1, \\${dirTemp}/\\${strFileSpec}2, etc.
+  This is the filespec of the numbered sudoers files you wish to
+  analyze and process.
+  This assumes that you've \fB--split\fP the sudoers file for processing
+  using sudoers-util. Only the prefix of the file needs to be specified;
+  do not specify a wildard.
+  .
+  Example: \fB--filespec\fP \fInosudoers\fP
+  .
+  Split files will be generated as \\${dirTemp}/\\${strFileSpec}0,
+  \\${dirTemp}/\\${strFileSpec}1, \\${dirTemp}/\\${strFileSpec}2, etc.
 
 .PP
 \fB-L | --log\fP \fI[logfilepath]\fP
-This logs actions including diffs of sudoers file change to a file; this
-may be in any directory. Logs begin and end with a banner to make it easier
-to find the start and end of each session. It is recommended to manage the
-logs through logrorate, enabling log rotation.
+  This logs actions including diffs of sudoers file change to a file; this
+  may be in any directory. Logs begin and end with a banner to make it easier
+  to find the start and end of each session. It is recommended to manage the
+  logs through logrorate, enabling log rotation.
 
 .PP
 \fB-O | --orphaned\fP
-Delete orphaned Aliases. In other words, if an alias is left with no tokens
-or only one token to the left of the equals (=) sign, the alias is orphaned
-and will be deleted.
+  Delete orphaned Aliases. In other words, if an alias is left with no tokens
+  or only one token to the left of the equals (=) sign, the alias is orphaned
+  and will be deleted.
 
 .PP
 \fB-r | --rulesdirectory\fP \fI[directory]\fP
-This is the directory path where inactive rule files arekeypress
-located. This assumes that you've --split the sudoers file.
+  This is the directory path where inactive rule files arekeypress
+  located. This assumes that you've --split the sudoers file.
 
 .PP
 \fB-R | --report | --log\fP \fI[Log Filename]\fP
-Specifying logging will capture most output and log most actions
-to the specified filename.
+  Specifying logging will capture most output and log most actions
+  to the specified filename.
 
 .PP
 \fB-s | --sudoersfile\fP
-This is the complete flattened and recombined sudoers file to review
+  This is the complete flattened and recombined sudoers file to review
 
 .PP
 Example: \fB--filespec\fP \fI[sudoersfile]\fP
 
 .PP
 \fB-S | --syntax\fP
-Validate output file with visudo.
+  Validate output file with visudo.
 
 .PP
 \fB-v | --verbose\fP
-Word vomit (helpful for debugging)
+  Word vomit (helpful for debugging)
 
 .PP
 \fB-v | --version\fP
-Display the version number
+  Display the version number
 
 .PP
 \fBNOTE: If filenames include spaces or extended ASCII characters, DO
-fully escape the filenames with quotes or \\!!\fP
+.br
+  fully escape the filenames with quotes or \\!!\fP
 
 .SH INSTALLATION
 .IP "  1." 5
-Open a terminal prompt and change to the directory where you want to clone sudo-ninja to
+Open a terminal prompt and change to the directory where you want to clone
+.br
+sudo-ninja to
 
 .EX
 $ cd ~/Download
@@ -174,6 +161,7 @@ $ cd ~/Download
 Open the repository in a web browser: https://github.com/klazarsk/sudo-ninja/
 .IP "  3." 5
 Click the green "code" button toward the right, then from the dropmenu, then
+.br
 under the "Clone" tab in the dropmenu, select https and then copy the url
 .IP "  4." 5
 Back to the terminal, clone the repository to your current working directory:
@@ -183,6 +171,7 @@ $ git clone git@github.com:klazarsk/sudo-ninja.git
 .EE
 .IP "  5." 5
 Copy the utilities to a directory in your PATH (optionally add ~/bin to your
+.br
 PATH variable):
 
 .EX
@@ -204,51 +193,46 @@ $ sudo-chop.sh --help
 
 .SH EXAMPLES
 This example takes the _recombined_sudoers\fIfile\fP that was preprocessed by
-sudo-chop, parses out the account names, checks against the
-_active_account\fIlist.sorted\fP file, and deletes any accounts not present in the
-active list AND not protected by the token preservation patterns specified in
-/etc/sudo-ninja.conf, commits the deletions to the file, prunes any orphaned
-aliases and rules, and finally checks syntax, while logging all actions taken
-to /var/log/path/to/logfile.log_ in diff format!.
-
-.PP
-\fBsudo-cleanup.sh --sudoersfile\fP _recombined-sudoers\fIfile\fP *\fI--active\fP \\
-_active_account\fIlist.sorted\fP \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
---syntax --config** \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
-
-.PP
-This example takes the _recombined_sudoers\fIfile\fP that was preprocessed by
-sudo-chop, parses out the account names, checks against the
-_active_account\fIlist.sorted\fP file, and deletes any accounts not present in the
-active list AND not protected by the token preservation patterns specified in
-/etc/sudo-ninja.conf, prunes any orphaned aliases and rules, and finally checks
-syntax -- but will not commit the propopsed user deletions to the sudoers file -
-but the proposed deletions ARE logged to \fI/var/log/path/to/logfile.log\fP in
-diff format!
-
-.PP
-\fBsudo-cleanup.sh --sudoersfile\fP _recombined-sudoers\fIfile\fP *\fI--active\fP \\
-_active_account\fIlist.sorted\fP \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
---config** \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
+  sudo-chop, parses out the account names, checks against the
+  _active_account\fIlist.sorted\fP file, and deletes any accounts not present in the
+  active list AND not protected by the token preservation patterns specified in
+  /etc/sudo-ninja.conf, commits the deletions to the file, prunes any orphaned
+  aliases and rules, and finally checks syntax, while logging all actions taken
+  to /var/log/path/to/logfile.log_ in diff format!.
+  .
+  \fBsudo-cleanup.sh --sudoersfile\fP _recombined-sudoers\fIfile\fP *\fI--active\fP \\
+  _active_account\fIlist.sorted\fP \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
+  --syntax --config** \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
+  .
+  This example takes the _recombined_sudoers\fIfile\fP that was preprocessed by
+  sudo-chop, parses out the account names, checks against the
+  _active_account\fIlist.sorted\fP file, and deletes any accounts not present in the
+  active list AND not protected by the token preservation patterns specified in
+  /etc/sudo-ninja.conf, prunes any orphaned aliases and rules, and finally checks
+  syntax -- but will not commit the propopsed user deletions to the sudoers file -
+  but the proposed deletions ARE logged to \fI/var/log/path/to/logfile.log\fP in
+  diff format!
+  .
+  \fBsudo-cleanup.sh --sudoersfile\fP _recombined-sudoers\fIfile\fP *\fI--active\fP \\
+  _active_account\fIlist.sorted\fP \fB--batchdelete --log\fP \fI/var/log/path/to/logfile.log\fP \\
+  --config** \fI/etc/sudo-ninja.conf\fP \fB--orphaned --syntax\fP
 
 .SH HISTORY
 This utility is intended to help organizations with years of technical debt to
-clean up monolithic sudoers file. While newer environments may deploy frameworks
-such as IDM and Satellite combined with ansible to build small, custom per-
-device sudoers files, legacy environments leveraging monolithic sudoers files
-may need a helping hand in cleaning up rules that are no longer applicable.
-
-.PP
-One of the hurdles to automating the cleaning up legacy sudoers files, is multi-
-first logical step is to "flatten" all sudoers aliases and rules into a single
-line per alias or rule.
-
-.PP
-Another hurdle is how to delete rules that no longer apply. In the particular
-use case which inspired the creation of this toolkit, it was fortunate that they
-had maintained a very consistent organization of the sudoers files where the
-aliases and rules were grouped by expiration date, and then a blank line. The
-structure was like so:
+  clean up monolithic sudoers file. While newer environments may deploy frameworks
+  such as IDM and Satellite combined with ansible to build small, custom per-
+  device sudoers files, legacy environments leveraging monolithic sudoers files
+  may need a helping hand in cleaning up rules that are no longer applicable.
+  .
+  One of the hurdles to automating the cleaning up legacy sudoers files, is multi-
+  first logical step is to "flatten" all sudoers aliases and rules into a single
+  line per alias or rule.
+  .
+  Another hurdle is how to delete rules that no longer apply. In the particular
+  use case which inspired the creation of this toolkit, it was fortunate that they
+  had maintained a very consistent organization of the sudoers files where the
+  aliases and rules were grouped by expiration date, and then a blank line. The
+  structure was like so:
 
 .EX
 
@@ -368,36 +352,33 @@ structure was like so:
 
 .PP
 As it happens in so many IT environments, "tyranny of the moment" caused pro-
-active manual maintenance of the sudoers file to be deprioritized until security
-audits required that the files be cleaned up. Thankfully, this organization had
-the foresight to keep their monolithic sudoer files organized into blocks of
-rules for each creation and expiration date, with an eye to manual cleanup
-at a later date. Apart from the multiline sudoers rules, their foresight to keep
-the sudoers file organized into blocks with descriptive comments preceding each
-block of rules, made automated cleanup of the sudoers file not only possible,
-but repeatable.
-
-.PP
-Processing of a multiline selection in a long file is trivial, but processing
-an arbitrary number of multiline selections in an inteterminate length file is
-overly complex for a short development cycle, so to complete this project within
-the short period of time we were alotted, we elected to "flatten" all alias and
-rules definitions into a single line apiece.
-
-.PP
-You'll notice that while they did maintain a consistent format consisting of
-a comment block with the first line containing an expiration tag, some notes,
-then rules, followed by a blank line, the date format was inconsistent. This was
-another complication; there was no standardization of the date format. Some had
-even spelled the month out, so we had to contend with that.
-
-.PP
-This utility tries to address all of those date format variations, but we strong-
-ly recommend sticking with ISO 8601 date formats, i.e., YYYY-MM-DD.
+  active manual maintenance of the sudoers file to be deprioritized until security
+  audits required that the files be cleaned up. Thankfully, this organization had
+  the foresight to keep their monolithic sudoer files organized into blocks of
+  rules for each creation and expiration date, with an eye to manual cleanup
+  at a later date. Apart from the multiline sudoers rules, their foresight to keep
+  the sudoers file organized into blocks with descriptive comments preceding each
+  block of rules, made automated cleanup of the sudoers file not only possible,
+  but repeatable.
+  .
+  Processing of a multiline selection in a long file is trivial, but processing
+  an arbitrary number of multiline selections in an inteterminate length file is
+  overly complex for a short development cycle, so to complete this project within
+  the short period of time we were alotted, we elected to "flatten" all alias and
+  rules definitions into a single line apiece.
+  .
+  You'll notice that while they did maintain a consistent format consisting of
+  a comment block with the first line containing an expiration tag, some notes,
+  then rules, followed by a blank line, the date format was inconsistent. This was
+  another complication; there was no standardization of the date format. Some had
+  even spelled the month out, so we had to contend with that.
+  .
+  This utility tries to address all of those date format variations, but we strong-
+  ly recommend sticking with ISO 8601 date formats, i.e., YYYY-MM-DD.
 
 
 .SH Copyright
 Copyright 2025 Red Hat. Inc.
-First release: November 2025
-Developed and Authored by Kimberly Lazarski (klazarsk@redhat.com)
-License: GPL V3.0
+  First release: November 2025
+  Developed and Authored by Kimberly Lazarski (klazarsk@redhat.com)
+  License: GPL V3.0

@@ -4,7 +4,6 @@ sudo-chop.sh 5 "November 2025" sudo-chop.sh "User Manual"
 ## NAME
 sudo-chop.sh \- Sudo ninja sudoers preprocessor and expired rules deletion
 
-
 ## SYNOPSIS
 
 **sudo-chop.sh --input** _monolithic-sudoers-file_ **--tempdir** \
@@ -13,14 +12,12 @@ sudo-chop.sh \- Sudo ninja sudoers preprocessor and expired rules deletion
 
 ## DESCRIPTION
 
-
-**sudo-chop** is part of the sudo-ninja suite; this utility takes a monolithic
-sudoers file, flattens all of the multi-line rules into a single line apiece,
-splits the file into chunks with each file consisting of comment block followed
-by a block of rules, and optionally removes expired rules before recombining the
-split files back into a single monolithic sudoers file, with the final step
-being to check syntax.
-
+  **sudo-chop** is part of the sudo-ninja suite; this utility takes a monolithic
+  sudoers file, flattens all of the multi-line rules into a single line apiece,
+  splits the file into chunks with each file consisting of comment block 
+  followed by a block of rules, and optionally removes expired rules before 
+  recombining the split files back into a single monolithic sudoers file, with 
+  the final step being to check syntax.
 
 ## OPTIONS
 
@@ -36,25 +33,27 @@ being to check syntax.
   (this debug mode does not turn on the bash debugger; for the bash debugger
   use -vvv | --plaid)
 
-**-e | --expire**
-  Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
-  non-8601 date format driven by client's preexisting data. Utility
-  converts all dates to ISO8601 format for internal processing. We do
-  recommend switching to YYYY-MM-DD format for future EXP tags!
+**-e | --expire** _[CustomTag]_
+  Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY non-8601 date format 
+  driven by client's preexisting data. Utility converts all dates to ISO8601 
+  format in memory at runtime for internal processing. We do recommend switching 
+  to YYYY-MM-DD format for future EXP tags!
+  .
+  The **--expire** option accepts an optional expiration tag; if no tag 
+  is specified, the tool defaults to _EXP_. If your custom expiration tag 
+  contains any spaces or special characters, enclose the tag with spaces.
 
-**--expirenewer** _[YYYY-MM-DD]_
-
+**--expirenewer** _YYYY-MM-DD_
   Expire rules which are NEWER than the specified date, but older than
   today's date $(date +"%Y-%m-%d").This option requires the --expire option.
-
+  .
   The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
-**--expireolder** _[YYYY-MM-DD]_
-
+**--expireolder** _YYYY-MM-DD_
   Expire rules which are OLDER than the specified date. The tool does not
   accept dates that are prior to the start of UNIX Epoch (1970-01-01). This 
   option requires the --expire option.
-
+  .
   The date MUST be specified in ISO8601 format (YYYY-MM-DD).
   
 **-f | --flatten**
@@ -63,8 +62,9 @@ being to check syntax.
   groups, and orphaned aliases in cases where all member tokens have been
   removed.
 
-**-i | --input** _[filename]_
-  Input file you want to process
+**-i | --input** _filename_
+  Input file you want to process; if there are spaces or special  characters, be
+  sure to quote and escape them properly! 
 
 **-l | --log | --report** _[Log Filename]_
   Specifying logging will capture most output and log most actions
@@ -82,13 +82,14 @@ being to check syntax.
 **-n | --nocomment**
   Strip out all comments
 
-**-o | --outputfile** _[filename]_
-  outputfile (for recombined sudoers file)
+**-o | --outputfile** _filename_
+  outputfile (for recombined sudoers file); if there are spaces or special 
+  characters, be sure to quote and escape them properly! 
 
 **-O | --overwrite**
   Overwrite output file
 
-**-p | --prefix** _[PREfix]_
+**-p | --prefix** _PREfix_
   PREfix for the split files which are numbered in order the rules are
   found in --input file. This is for the temp files created in tempdir.
 
@@ -103,8 +104,9 @@ being to check syntax.
 **-S | --syntax**
   Validate output file with visudo.
 
-**-t | --tempdir** _[dirname]_
-  temp directory to place working files  (should _not_ be /tmp!)
+**-t | --tempdir** _dirname_
+  temp directory to place working files  (should _not_ be /tmp!); if there are 
+  spaces or special characters, be sure to quote and escape them properly! 
 
 **-v | --verbose**
   words and stuff for debugging
@@ -122,77 +124,76 @@ being to check syntax.
 
 ## INSTALLATION
 
-1. Open a terminal prompt and change to the directory where you want to clone sudo-ninja to
+  1. Open a terminal prompt and change to the directory where you want to clone 
+  sudo-ninja to
 
+  ```
+  $ cd ~/Download
+  ```
 
-```
-$ cd ~/Download
-```
+  2. Open the repository in a web browser: https://github.com/klazarsk/sudo-ninja/
 
-2. Open the repository in a web browser: https://github.com/klazarsk/sudo-ninja/
+  2. Click the green "code" button toward the right, then from the dropmenu, 
+  then under the "Clone" tab in the dropmenu, select https and then copy the url
 
-2. Click the green "code" button toward the right, then from the dropmenu, then
-under the "Clone" tab in the dropmenu, select https and then copy the url
+  2. Back to the terminal, clone the repository to your current working directory:
 
-2. Back to the terminal, clone the repository to your current working directory:
+  ```
+  $ git clone git@github.com:klazarsk/sudo-ninja.git
+  ```
 
+  2. Copy the utilities to a directory in your PATH (optionally add ~/bin to 
+  your PATH variable):
 
-```
-$ git clone git@github.com:klazarsk/sudo-ninja.git
-```
+  ```
+  $ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
+  ```
 
-2. Copy the utilities to a directory in your PATH (optionally add ~/bin to your
-PATH variable):
+  2. Set the execute permission bit on the files
 
-```
-$ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
-```
+  ```
+  $ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
+  ```
 
-2. Set the execute permission bit on the files
+  2. Verify the utilities are accessible by trying to run the help screens:
 
-```
-$ sudo chmod +x /usr/bin/{sudo-chop.sh,sudo-chop.sh}
-```
-
-2. Verify the utilities are accessible by trying to run the help screens:
-
-```
-$ sudo-chop.sh --help
-$ sudo-cleanup.sh --help
-```
+  ```
+  $ sudo-chop.sh --help
+  $ sudo-cleanup.sh --help
+  ```
 
 ## EXAMPLES
 
-This example will take input file _monolithic-sudoers-file_, split it into
-chunks which are placed in temporary directory _temp_directory_name_ with the file
-prefix _myway_, flatten  all the rules, recombine the split files into
-_nosudoers-output_file_, delete all the expired blocks, and log all actions
-to _/path/to-your/log-file-location.log_:
+  This example will take input file _monolithic-sudoers-file_, split it into
+  chunks which are placed in temporary directory _temp_directory_name_ with the 
+  file prefix _myway_, flatten  all the rules, recombine the split files into
+  _nosudoers-output_file_, delete all the expired blocks, and log all actions
+  to _/path/to-your/log-file-location.log_:
 
-**sudo-chop.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
- **--flatten --split --outputfile** _nosudoers-output-file_ **--expire --recombine \
- --prefix** _myway_ **--log** _/path/to/your/log-file-location.log_
-
-
-The following example will take input file _monolithic-sudoers-file_, split it
-into chunks which are placed in temporary directory _temp_directory_name_ with the
-file prefix _east_, flatten all rules, recombine the split files into a monolithic
-sudoers file named output-sudoers-file, and check the syntax upon completion,
-but will not delete the expired rules, and log all actions to mylog.log:
-
-**sudo-katana.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
-**--flatten --split --outputfile** _output-sudoers_file_ **--recombine --prefix** \
-_east_ **--log** _mylog.log_ **--syntax**
+  **sudo-chop.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
+  **--flatten --split --outputfile** _nosudoers-output-file_ **--expire --recombine \
+  --prefix** _myway_ **--log** _/path/to/your/log-file-location.log_
 
 
-This last example will take the split files located in _temp_directory_name_ from
-a previous **--split** and **--flatten** action, which were further processed by
-the sysadmin team, and then recombine the split files into a monolithic sudoers
-file and verify the syntax, and log all actions to file _sudo-ninja.log_:
+  The following example will take input file _monolithic-sudoers-file_, split it
+  into chunks which are placed in temporary directory _temp_directory_name_ with the
+  file prefix _east_, flatten all rules, recombine the split files into a monolithic
+  sudoers file named output-sudoers-file, and check the syntax upon completion,
+  but will not delete the expired rules, and log all actions to mylog.log:
 
-**sudo-katana.sh **--tempdir** _temp_directory_name_ \
-**--outputfile** _output-sudoers_file_ **--recombine --prefix** \
-_east_ **--log** _sudo-ninja.log_ **--syntax**
+  **sudo-katana.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
+  **--flatten --split --outputfile** _output-sudoers_file_ **--recombine --prefix** \
+  _east_ **--log** _mylog.log_ **--syntax**
+
+
+  This last example will take the split files located in _temp_directory_name_ from
+  a previous **--split** and **--flatten** action, which were further processed by
+  the sysadmin team, and then recombine the split files into a monolithic sudoers
+  file and verify the syntax, and log all actions to file _sudo-ninja.log_:
+
+  **sudo-katana.sh **--tempdir** _temp_directory_name_ \
+  **--outputfile** _output-sudoers_file_ **--recombine --prefix** \
+  _east_ **--log** _sudo-ninja.log_ **--syntax**
 
 
 

@@ -10,11 +10,11 @@ sudo-chop.sh - Sudo ninja sudoers preprocessor and expired rules deletion
 
 .SH DESCRIPTION
 \fBsudo-chop\fP is part of the sudo-ninja suite; this utility takes a monolithic
-sudoers file, flattens all of the multi-line rules into a single line apiece,
-splits the file into chunks with each file consisting of comment block followed
-by a block of rules, and optionally removes expired rules before recombining the
-split files back into a single monolithic sudoers file, with the final step
-being to check syntax.
+  sudoers file, flattens all of the multi-line rules into a single line apiece,
+  splits the file into chunks with each file consisting of comment block
+  followed by a block of rules, and optionally removes expired rules before
+  recombining the split files back into a single monolithic sudoers file, with
+  the final step being to check syntax.
 
 .SH OPTIONS
 \fB-h | --help\fP
@@ -32,32 +32,30 @@ being to check syntax.
   use -vvv | --plaid)
 
 .PP
-\fB-e | --expire\fP
-  Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
-  non-8601 date format driven by client's preexisting data. Utility
-  converts all dates to ISO8601 format for internal processing. We do
-  recommend switching to YYYY-MM-DD format for future EXP tags!
+\fB-e | --expire\fP \fI[CustomTag]\fP
+  Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY non-8601 date format
+  driven by client's preexisting data. Utility converts all dates to ISO8601
+  format in memory at runtime for internal processing. We do recommend switching
+  to YYYY-MM-DD format for future EXP tags!
+  .
+  The \fB--expire\fP option accepts an optional expiration tag; if no tag
+  is specified, the tool defaults to \fIEXP\fP\&. If your custom expiration tag
+  contains any spaces or special characters, enclose the tag with spaces.
 
 .PP
-\fB--expirenewer\fP \fI[YYYY-MM-DD]\fP
-
-.PP
-Expire rules which are NEWER than the specified date, but older than
+\fB--expirenewer\fP \fIYYYY-MM-DD\fP
+  Expire rules which are NEWER than the specified date, but older than
   today's date $(date +"%Y-%m-%d").This option requires the --expire option.
+  .
+  The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
 .PP
-The date MUST be specified in ISO8601 format (YYYY-MM-DD).
-
-.PP
-\fB--expireolder\fP \fI[YYYY-MM-DD]\fP
-
-.PP
-Expire rules which are OLDER than the specified date. The tool does not
+\fB--expireolder\fP \fIYYYY-MM-DD\fP
+  Expire rules which are OLDER than the specified date. The tool does not
   accept dates that are prior to the start of UNIX Epoch (1970-01-01). This
   option requires the --expire option.
-
-.PP
-The date MUST be specified in ISO8601 format (YYYY-MM-DD).
+  .
+  The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
 .PP
 \fB-f | --flatten\fP
@@ -67,8 +65,9 @@ The date MUST be specified in ISO8601 format (YYYY-MM-DD).
   removed.
 
 .PP
-\fB-i | --input\fP \fI[filename]\fP
-  Input file you want to process
+\fB-i | --input\fP \fIfilename\fP
+  Input file you want to process; if there are spaces or special  characters, be
+  sure to quote and escape them properly!
 
 .PP
 \fB-l | --log | --report\fP \fI[Log Filename]\fP
@@ -91,15 +90,16 @@ The date MUST be specified in ISO8601 format (YYYY-MM-DD).
   Strip out all comments
 
 .PP
-\fB-o | --outputfile\fP \fI[filename]\fP
-  outputfile (for recombined sudoers file)
+\fB-o | --outputfile\fP \fIfilename\fP
+  outputfile (for recombined sudoers file); if there are spaces or special
+  characters, be sure to quote and escape them properly!
 
 .PP
 \fB-O | --overwrite\fP
   Overwrite output file
 
 .PP
-\fB-p | --prefix\fP \fI[PREfix]\fP
+\fB-p | --prefix\fP \fIPREfix\fP
   PREfix for the split files which are numbered in order the rules are
   found in --input file. This is for the temp files created in tempdir.
 
@@ -118,8 +118,9 @@ The date MUST be specified in ISO8601 format (YYYY-MM-DD).
   Validate output file with visudo.
 
 .PP
-\fB-t | --tempdir\fP \fI[dirname]\fP
-  temp directory to place working files  (should \fInot\fP be /tmp!)
+\fB-t | --tempdir\fP \fIdirname\fP
+  temp directory to place working files  (should \fInot\fP be /tmp!); if there are
+  spaces or special characters, be sure to quote and escape them properly!
 
 .PP
 \fB-v | --verbose\fP
@@ -140,7 +141,8 @@ The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
 .SH INSTALLATION
 .IP "  1." 5
-Open a terminal prompt and change to the directory where you want to clone sudo-ninja to
+Open a terminal prompt and change to the directory where you want to clone
+sudo-ninja to
 
 .EX
 $ cd ~/Download
@@ -148,8 +150,8 @@ $ cd ~/Download
 .IP "  2." 5
 Open the repository in a web browser: https://github.com/klazarsk/sudo-ninja/
 .IP "  3." 5
-Click the green "code" button toward the right, then from the dropmenu, then
-under the "Clone" tab in the dropmenu, select https and then copy the url
+Click the green "code" button toward the right, then from the dropmenu,
+then under the "Clone" tab in the dropmenu, select https and then copy the url
 .IP "  4." 5
 Back to the terminal, clone the repository to your current working directory:
 
@@ -157,8 +159,8 @@ Back to the terminal, clone the repository to your current working directory:
 $ git clone git@github.com:klazarsk/sudo-ninja.git
 .EE
 .IP "  5." 5
-Copy the utilities to a directory in your PATH (optionally add ~/bin to your
-PATH variable):
+Copy the utilities to a directory in your PATH (optionally add ~/bin to
+your PATH variable):
 
 .EX
 $ sudo cp {sudo-chop.sh,sudo-chop.sh} /usr/bin
@@ -179,38 +181,38 @@ $ sudo-cleanup.sh --help
 
 .SH EXAMPLES
 This example will take input file \fImonolithic-sudoers-file\fP, split it into
-chunks which are placed in temporary directory _temp_directory\fIname\fP with the file
-prefix \fImyway\fP, flatten  all the rules, recombine the split files into
-_nosudoers-output\fIfile\fP, delete all the expired blocks, and log all actions
-to \fI/path/to-your/log-file-location.log\fP:
+  chunks which are placed in temporary directory _temp_directory\fIname\fP with the
+  file prefix \fImyway\fP, flatten  all the rules, recombine the split files into
+  _nosudoers-output\fIfile\fP, delete all the expired blocks, and log all actions
+  to \fI/path/to-your/log-file-location.log\fP:
 
 .PP
 \fBsudo-chop.sh --input\fP \fImonolithic-sudoers-file\fP \fB--tempdir\fP _temp_directory\fIname\fP \\
- \fB--flatten --split --outputfile\fP \fInosudoers-output-file\fP \fB--expire --recombine \\
- --prefix\fP \fImyway\fP \fB--log\fP \fI/path/to/your/log-file-location.log\fP
+  \fB--flatten --split --outputfile\fP \fInosudoers-output-file\fP \fB--expire --recombine \\
+  --prefix\fP \fImyway\fP \fB--log\fP \fI/path/to/your/log-file-location.log\fP
 
 .PP
 The following example will take input file \fImonolithic-sudoers-file\fP, split it
-into chunks which are placed in temporary directory _temp_directory\fIname\fP with the
-file prefix \fIeast\fP, flatten all rules, recombine the split files into a monolithic
-sudoers file named output-sudoers-file, and check the syntax upon completion,
-but will not delete the expired rules, and log all actions to mylog.log:
+  into chunks which are placed in temporary directory _temp_directory\fIname\fP with the
+  file prefix \fIeast\fP, flatten all rules, recombine the split files into a monolithic
+  sudoers file named output-sudoers-file, and check the syntax upon completion,
+  but will not delete the expired rules, and log all actions to mylog.log:
 
 .PP
 \fBsudo-katana.sh --input\fP \fImonolithic-sudoers-file\fP \fB--tempdir\fP _temp_directory\fIname\fP \\
-\fB--flatten --split --outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
-\fIeast\fP \fB--log\fP \fImylog.log\fP \fB--syntax\fP
+  \fB--flatten --split --outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
+  \fIeast\fP \fB--log\fP \fImylog.log\fP \fB--syntax\fP
 
 .PP
 This last example will take the split files located in _temp_directory\fIname\fP from
-a previous \fB--split\fP and \fB--flatten\fP action, which were further processed by
-the sysadmin team, and then recombine the split files into a monolithic sudoers
-file and verify the syntax, and log all actions to file \fIsudo-ninja.log\fP:
+  a previous \fB--split\fP and \fB--flatten\fP action, which were further processed by
+  the sysadmin team, and then recombine the split files into a monolithic sudoers
+  file and verify the syntax, and log all actions to file \fIsudo-ninja.log\fP:
 
 .PP
 **sudo-katana.sh \fB--tempdir\fP _temp_directory\fIname\fP \\
-\fB--outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
-\fIeast\fP \fB--log\fP \fIsudo-ninja.log\fP \fB--syntax\fP
+  \fB--outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
+  \fIeast\fP \fB--log\fP \fIsudo-ninja.log\fP \fB--syntax\fP
 
 .SH HISTORY
 This utility is intended to help organizations with years of technical debt to
