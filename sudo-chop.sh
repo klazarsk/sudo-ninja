@@ -110,13 +110,17 @@ sudo-chop help
       Debug mode which turns on sleeps, pause breaks waiting for keypress
       to continue, allowing for review and analysis of intermediate files
 
-    ${otagBold} -e | --expire${ctag}
+    ${otagBold} -e | --expire${ctag} ${otagItal}[Custom Expiration Tag]${ctag}
       Expiration tags driven by EXP MM/DD/YY or EXP MM/DD/YYYY
       non-8601 date format driven by client's preexisting data. Utility
       converts all dates to ISO8601 format for internal processing. We do
       recommend switching to YYYY-MM-DD format for future EXP tags!
 
-    ${otagBold} --expirenewer ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
+      --expire accepts a custom expiration tag; if no tag is specified, the tool
+      defaults to EXP. If your custom expiration tag contains any spaces or
+      special characters, enclose the tag with spaces.
+
+    ${otagBold} --expirenewer ${ctag}${otagItal}YYYY-MM-DD${ctag}
 
       Expire rules which are NEWER than the specified date, but older than
       today's date $(date +"%Y-%m-%d"). This option requires the --expire
@@ -124,7 +128,7 @@ sudo-chop help
 
       The date MUST be specified in ISO8601 format (YYYY-MM-DD).
 
-    ${otagBold} --expireolder ${ctag}${otagItal}[YYYY-MM-DD]${ctag}
+    ${otagBold} --expireolder ${ctag}${otagItal}YYYY-MM-DD${ctag}
 
       Expire rules which are OLDER than the specified date. The tool does not
       accept dates that are prior to the start of UNIX Epoch (1970-01-01). This
@@ -337,14 +341,14 @@ function fnSplitExpirations () {
     ((intCounter+=1));
     strStep="${FUNCNAME} $(( 100 * ${intCounter} /  ${#arrFiles[@]} ))%; processing ${curFile}.";
     [ ${optMonitor} -eq 1 ] && printf "\033c" && ls -lhtr "${dirTemp}" | tail -n ${LINES} || fnSpinner;
-    if [ $(grep -c 'EXP' "${curFile}") -le 1 ] ;
+    if [ $(grep -c "${strExpire}" "${curFile}") -le 1 ] ;
     then
       ${cmdWordVomit} "Zero or only one expiration tag in ${curFile}, processing...\n";
       mv ${optVerbose} "${curFile}" "${dirTemp}/${optFilePrefix}${intRenumber}.remerged";
       ((intRenumber++));
     else
-      echo -en "\x1b[2K\rMore than two EXP tags found in ${curFile}, processing...\r";
-      ${cmdLog} "More than two EXP tags found in ${curFile}, processing...";
+      echo -en "\x1b[2K\rMore than two ${strExpire} tags found in ${curFile}, processing...\r";
+      ${cmdLog} "More than two ${strExpire} tags found in ${curFile}, processing...";
       IFS='\0';
       sed -E 's/^(.*)([[:alnum:]][[:space:]]+[[:digit:]]{2}[\/-]|[[:alnum:]][[:space:]]+[[:digit:]]{1}[\/-])([[:digit:]]{2}|[[:digit:]]{1})([\/-][[:digit:]]{2}|[\/-][[:digit:]]{4})(.*)$/EOR\o0\n\1\2\3\4/g' "${curFile}" | csplit ${optQuiet} --suffix-format="%02d.tmp-correction" --suppress-matched --prefix="${dirTemp}/${optFilePrefix}" - '/EOR/' '{*}';
       unset IFS;
@@ -371,40 +375,40 @@ function fnRmExpiredRules() {
   declare arrExpiredRules;
   local dtToday="$(date +"%Y-%m-%d")";
 
-  # Search and collect expired files (EXP date = (today - 1 day) )
+  # Search and collect expired files (${strExpire} date = (today - 1 day) )
   for curFile in $(find "${dirTemp}" -name "*.tmp-merged" | sort -V);
   do
     strStep="Scanning ${curFile} for expired rules... ";
     fnSpinner;
 
-    if $(grep -E "#.*EXP" "${curFile}" >/dev/null);
+    if $(grep -E "#.*${strExpire}" "${curFile}" >/dev/null);
     then
-      curExpDate=$(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g');
+      curExpDate=$(sed -En "/^#.*(${strExpire}.*)$/s/.*(${strExpire}.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g" "${curFile}" |sed 's,/,-,g'  | sed -E "s/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^${strExpire} //g");
 
       if [ -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" < "${dtToday}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtToday}" +%s)" ]];
         then
           ${cmdEcho}  =-e "\n${curFile}: ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtExpireOlder}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" > "$(date -d "${dtExpireNewer}" +%s)" && "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtExpireOlder}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ ! -z "${dtExpireNewer}" ] && [ -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" > "${dtExpireNewer}" && "${curExpDate}" < "${dtToday}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" > "$(date -d "${dtExpireNewer}" +%s)" && "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtToday}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} > ${dtExpireNewer} && ${curExpDate} < ${dtToday}"
           arrExpiredRules+=("${curFile}");
         fi;
       elif [ -z "${dtExpireNewer}" ] && [ ! -z "${dtExpireOlder}" ];
       then
-        if [[ "${curExpDate}" < "${dtExpireOlder}" ]];
+        if [[ "$(date -d "${curExpDate}" +%s)" < "$(date -d "${dtExpireOlder}" +%s)" ]];
         then
           ${cmdEcho} -e "\n${curFile}: ${curExpDate} < ${dtExpireOlder}"
           arrExpiredRules+=("${curFile}");
@@ -429,7 +433,7 @@ function fnRmExpiredRules() {
     ${cmdLog} "${strStep}" >> "${fileLog}" ; ${cmdEcho} "${strStep}";
     for curFile in ${arrExpiredRules[@]};
     do
-      strStep="[${curFile}], expiration date $(sed -En '/^#.*(EXP.*)$/s/.*(EXP.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g' "${curFile}" |sed 's,/,-,g'  | sed -E 's/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^EXP //g').";
+      strStep="[${curFile}], expiration date $(sed -En "/^#.*(${strExpire}.*)$/s/.*(${strExpire}.*)$/\1/p;s/(.*\/)([0-9]{2}$)/\120\2/g" "${curFile}" |sed 's,/,-,g'  | sed -E "s/\(.*$//g; s/(-)([0-9]{2})$/\120\2/g ; s/([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})/\3-\1-\2/g; s/-([0-9])-/-0\1-/g; s/-([0-9])$/-0\1/g; s/([Mm][Aa][Yy])-([0-9]{2})-([0-9]{4})/\3-05-\2/g ; s/^${strExpire} //g").";
       cat "${curFile}" >> "${fileLog}"
     done;
     echo -e "-------------------------------------------------------------------------------" | tee -a "${fileLog}";
@@ -592,6 +596,16 @@ do
                     cmdDbgEcho="echo";
                     ;;
     -e | --expire ) optExpire="1";
+                    argBackup=("$@");
+                    shift;
+                    strExpire="${1}"
+                    rexExpire='-.*'
+                    if [[ "${strExpire}" =~ "${rexExpire}" ]];
+                    then
+                      echo "No expiration tag supplied; defaulting to EXP.";
+                      strExpire="EXP";
+                      set -- "${argBackup[@]}";
+                    fi;
                     ;;
     --expirenewer ) shift;
                     dtExpireNewer="$1"
@@ -703,9 +717,9 @@ done;
 
 if [ -n "${dtExpireNewer}" ] && [ -n "${dtExpireOlder}" ] ;
 then
-  if [[ "${dtExpireNewer}" -gt  "${dtExpireOlder}" ]] ;
+  if [[ "$(date -d "${dtExpireNewer}" +%s)" -gt  "$(date -d ${dtExpireOlder} +%s)" ]] ;
   then
-    strError="--expirenewer ${dtExpireNewer} must be earlier than --expireolder ${dtExpireOlder}."
+    strError="$LINENO --expirenewer ${dtExpireNewer} must be earlier than --expireolder ${dtExpireOlder}."
     fnHelp
   fi
 fi
