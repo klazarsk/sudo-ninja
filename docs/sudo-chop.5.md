@@ -180,7 +180,7 @@ file prefix _east_, flatten all rules, recombine the split files into a monolith
 sudoers file named output-sudoers-file, and check the syntax upon completion,
 but will not delete the expired rules, and log all actions to mylog.log:
 
-**sudo-katana.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
+**sudo-chop.sh --input** _monolithic-sudoers-file_ **--tempdir** _temp_directory_name_ \
 **--flatten --split --outputfile** _output-sudoers_file_ **--recombine --prefix** \
 _east_ **--log** _mylog.log_ **--syntax**
 
@@ -190,7 +190,7 @@ a previous **--split** and **--flatten** action, which were further processed by
 the sysadmin team, and then recombine the split files into a monolithic sudoers
 file and verify the syntax, and log all actions to file _sudo-ninja.log_:
 
-**sudo-katana.sh **--tempdir** _temp_directory_name_ \
+**sudo-chop.sh **--tempdir** _temp_directory_name_ \
 **--outputfile** _output-sudoers_file_ **--recombine --prefix** \
 _east_ **--log** _sudo-ninja.log_ **--syntax**
 

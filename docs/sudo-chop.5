@@ -197,7 +197,7 @@ sudoers file named output-sudoers-file, and check the syntax upon completion,
 but will not delete the expired rules, and log all actions to mylog.log:
 
 .PP
-\fBsudo-katana.sh --input\fP \fImonolithic-sudoers-file\fP \fB--tempdir\fP _temp_directory\fIname\fP \\
+\fBsudo-chop.sh --input\fP \fImonolithic-sudoers-file\fP \fB--tempdir\fP _temp_directory\fIname\fP \\
 \fB--flatten --split --outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
 \fIeast\fP \fB--log\fP \fImylog.log\fP \fB--syntax\fP
 
@@ -208,7 +208,7 @@ the sysadmin team, and then recombine the split files into a monolithic sudoers
 file and verify the syntax, and log all actions to file \fIsudo-ninja.log\fP:
 
 .PP
-**sudo-katana.sh \fB--tempdir\fP _temp_directory\fIname\fP \\
+**sudo-chop.sh \fB--tempdir\fP _temp_directory\fIname\fP \\
 \fB--outputfile\fP _output-sudoers\fIfile\fP \fB--recombine --prefix\fP \\
 \fIeast\fP \fB--log\fP \fIsudo-ninja.log\fP \fB--syntax\fP
 
