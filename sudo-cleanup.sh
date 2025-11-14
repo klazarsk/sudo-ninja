@@ -2,7 +2,7 @@
 #
 #########################
 #
-# sudo-taijutsu
+# sudo-cleanup
 # Copyright 2025 Red Hat, Inc.
 #
 # Author: Kimberly Lazarski
