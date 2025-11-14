@@ -17,7 +17,7 @@
 #
 #########################
 # Version and Copyright
-strVersion="0.9";
+strVersion="1.0";
 strCopyright="Red Hat, Inc. 2025";
 strAuthor="Kimberly Lazarski";
 #########################
